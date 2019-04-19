@@ -14,7 +14,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
-      valueListenable: _logic.loading,
+      valueListenable: _logic.loadingDNS,
       builder: (BuildContext context, bool loading, Widget child) {
         return Scaffold(
           appBar: AppBar(
@@ -66,17 +66,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   },
                 ),
               ),
-              _HomeListHeader(
-                text: 'Nodes (123) Open(0) Recent (0)\nCrawling (0)\nOpen Checkers\n0 - 0 - 0 - 0 - 0 - 0',
+              Container(
+                child: AnimatedBuilder(
+                    animation: Listenable.merge([_logic.nodes, _logic.openCount]),
+                    builder: (BuildContext context, Widget child) {
+                      return _HomeListHeader(
+                        text: 'Nodes (${_logic.nodesCount}) Open(${_logic.openCount.value}) Recent (0)\nCrawling (0)\nOpen Checkers\n0 - 0 - 0 - 0 - 0 - 0',
+                      );
+                    }
+                ),
               ),
               Expanded(
-                child: ValueListenableBuilder(
-                  valueListenable: _logic.nodes,
-                  builder: (BuildContext context, List<Node> nodes, Widget child) {
+                child: AnimatedBuilder(
+                  animation: _logic.nodes,
+                  builder: (BuildContext context, Widget child) {
                     return ListView.builder(
-                      itemCount: nodes.length,
+                      itemCount: _logic.nodes.length,
                       itemBuilder: (BuildContext context, int index) {
-                        final node = nodes[index];
+                        final node = _logic.nodes[index];
                         return ListTile(
                           title: Text('${node.address}:${node.port}'),
                           subtitle: Text('${node.open}'),
