@@ -75,10 +75,10 @@ class OpenScanner {
           _openCount.value++;
         }
       }
-      if (!_shutdown) {
-        await new Future.delayed(const Duration(seconds: 1));
-        _startScanner(index);
-      }
+    }
+    if (!_shutdown) {
+      await new Future.delayed(const Duration(seconds: 1));
+      _startScanner(index);
     }
   }
 
