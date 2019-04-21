@@ -69,7 +69,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: AnimatedBuilder(
                     animation: Listenable.merge([
                       HomeLogic.instance.nodes,
-                      HomeLogic.instance.nodeCheckIndex,
                       HomeLogic.instance.openScanner.openCount,
                       HomeLogic.instance.openScanner.one,
                       HomeLogic.instance.openScanner.two,

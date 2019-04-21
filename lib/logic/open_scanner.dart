@@ -60,6 +60,10 @@ class OpenScanner {
     _shutdown = true;
   }
 
+  void reset() {
+    _indexes.forEach((i) => i.value = 0);
+  }
+
   void _startScanner(int index) async {
     if (HomeLogic.instance.nodes.length == 0) {
       if (!_shutdown) {

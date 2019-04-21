@@ -35,4 +35,10 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
     super.removeAll(elements);
     notifyListeners();
   }
+
+  @override
+  void clear() {
+    super.clear();
+    notifyListeners();
+  }
 }

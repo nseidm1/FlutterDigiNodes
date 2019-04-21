@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:diginodes/coin_definitions.dart';
-
+import 'package:diginodes/messages/disconnect.dart';
+import 'package:diginodes/messages/message.dart';
+import 'package:diginodes/messages/none.dart';
 
 final _dnsCache = Map<String, List<InternetAddress>>();
 
@@ -54,6 +56,39 @@ class NodeService {
     } catch (e) {
       return Future<bool>.value(false);
     }
+  }
+
+  Socket _currentSocket = null;
+
+  void connectToNode(Node node) async {
+    try{
+      _currentSocket = await Socket.connect(node.address, node.port, timeout: Duration(milliseconds: 750));
+      _currentSocket.listen(dataHandler, onError: errorHandler, onDone: doneHandler, cancelOnError: false);
+      while(true) {
+
+        if (MessageManager.instance.sendMessage is Disconnect) {
+          doneHandler();
+          return;
+        }
+
+
+        MessageManager.instance.sendMessage = None.instance;
+      }
+    } catch(e) {
+      doneHandler();
+    }
+  }
+
+  void dataHandler(data){
+    print(new String.fromCharCodes(data).trim());
+  }
+
+  void errorHandler(error, StackTrace trace){
+    print(error);
+  }
+
+  void doneHandler(){
+    _currentSocket?.destroy();
   }
 
 // 1. lookup dns
