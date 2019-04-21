@@ -65,25 +65,20 @@ class OpenScanner {
   }
 
   void _startScanner(int index) async {
-    if (HomeLogic.instance.nodes.length == 0) {
+    if (HomeLogic.instance.nodes.length != 0) {
+      _indexes[index].value = _currentMaxIndex() + 1;
+      Node nextNode = HomeLogic.instance.nodes[_indexes[index].value];
+      if (!nextNode.open) {
+        bool open = await NodeService.instance.checkNode(nextNode);
+        nextNode.open = open;
+        if (open) {
+          _openCount.value++;
+        }
+      }
       if (!_shutdown) {
         await new Future.delayed(const Duration(seconds: 1));
         _startScanner(index);
       }
-      return;
-    }
-    _indexes[index].value = _currentMaxIndex() + 1;
-    Node nextNode = HomeLogic.instance.nodes[_indexes[index].value];
-    if (!nextNode.open) {
-      bool open = await NodeService.instance.checkNode(nextNode);
-      nextNode.open = open;
-      if (open) {
-        _openCount.value++;
-      }
-    }
-    if (!_shutdown) {
-      await new Future.delayed(const Duration(seconds: 1));
-      _startScanner(index);
     }
   }
 
