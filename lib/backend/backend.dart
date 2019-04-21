@@ -58,7 +58,7 @@ class NodeService {
     }
   }
 
-  Socket _currentSocket = null;
+  Socket _currentSocket;
 
   void connectToNode(Node node) async {
     try{

@@ -10,5 +10,5 @@ class Message {
 class MessageManager {
 
   static MessageManager instance = MessageManager();
-  Message sendMessage = new None();
+  Message sendMessage = None.instance;
 }

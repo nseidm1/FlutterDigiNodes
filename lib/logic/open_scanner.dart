@@ -86,4 +86,8 @@ class OpenScanner {
       _startScanner(index);
     }
   }
+
+  Node getOpenNode() {
+
+  }
 }

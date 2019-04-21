@@ -37,6 +37,14 @@ class HomeLogic {
     _loadingDNS.value = false;
   }
 
+  Node getOpenNode() {
+    for (Node node in _nodes) {
+      if (node.open) {
+        return node;
+      }
+    }
+  }
+
   checkOpenState(Node node) {
 
   }
