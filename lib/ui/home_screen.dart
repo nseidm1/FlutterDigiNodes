@@ -9,12 +9,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final _logic = HomeLogic();
 
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
-      valueListenable: _logic.loadingDNS,
+      valueListenable: HomeLogic.instance.loadingDNS,
       builder: (BuildContext context, bool loading, Widget child) {
         return Scaffold(
           appBar: AppBar(
@@ -23,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Image.asset('assets/logo.png'),
             ),
             title: _CoinDefinitionDropdown(
-              coinDefinition: _logic.coinDefinition,
+              coinDefinition: HomeLogic.instance.coinDefinition,
               enabled: !loading,
             ),
             actions: <Widget>[
@@ -33,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Center(child: CircularProgressIndicator()),
                     )
                   : IconButton(
-                      onPressed: _logic.onShareButtonPressed,
+                      onPressed: HomeLogic.instance.onShareButtonPressed,
                       icon: Icon(Icons.share),
                     ),
             ],
@@ -47,7 +46,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: <Widget>[
                     Expanded(child: TextField()),
                     FlatButton(
-                      onPressed: _logic.onAddManualNodePressed,
+                      onPressed: HomeLogic.instance.onAddManualNodePressed,
                       child: Text('ADD'),
                     ),
                   ],
@@ -68,22 +67,35 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
               Container(
                 child: AnimatedBuilder(
-                    animation: Listenable.merge([_logic.nodes, _logic.openCount]),
+                    animation: Listenable.merge([
+                      HomeLogic.instance.nodes,
+                      HomeLogic.instance.nodeCheckIndex,
+                      HomeLogic.instance.openScanner.openCount,
+                      HomeLogic.instance.openScanner.one,
+                      HomeLogic.instance.openScanner.two,
+                      HomeLogic.instance.openScanner.three,
+                      HomeLogic.instance.openScanner.four,
+                      HomeLogic.instance.openScanner.five,
+                      HomeLogic.instance.openScanner.six
+                    ]),
                     builder: (BuildContext context, Widget child) {
                       return _HomeListHeader(
-                        text: 'Nodes (${_logic.nodesCount}) Open(${_logic.openCount.value}) Recent (0)\nCrawling (0)\nOpen Checkers\n0 - 0 - 0 - 0 - 0 - 0',
+                        text: 'Nodes (${HomeLogic.instance.nodesCount}) '
+                            'Open(${HomeLogic.instance.openScanner.openCount.value}) '
+                            'Recent (0)\nCrawling (0)\n'
+                            'Open Checkers\n${HomeLogic.instance.openScanner.one.value} - ${HomeLogic.instance.openScanner.two.value} - ${HomeLogic.instance.openScanner.three.value} - ${HomeLogic.instance.openScanner.four.value} - ${HomeLogic.instance.openScanner.five.value} - ${HomeLogic.instance.openScanner.six.value}',
                       );
                     }
                 ),
               ),
               Expanded(
                 child: AnimatedBuilder(
-                  animation: _logic.nodes,
+                  animation: HomeLogic.instance.nodes,
                   builder: (BuildContext context, Widget child) {
                     return ListView.builder(
-                      itemCount: _logic.nodes.length,
+                      itemCount: HomeLogic.instance.nodes.length,
                       itemBuilder: (BuildContext context, int index) {
-                        final node = _logic.nodes[index];
+                        final node = HomeLogic.instance.nodes[index];
                         return ListTile(
                           title: Text('${node.address}:${node.port}'),
                           subtitle: Text('${node.open}'),

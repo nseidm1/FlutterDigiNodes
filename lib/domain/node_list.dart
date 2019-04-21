@@ -1,4 +1,3 @@
-
 import 'package:collection/collection.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:flutter/foundation.dart';

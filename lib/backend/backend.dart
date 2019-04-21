@@ -1,6 +1,8 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:diginodes/coin_definitions.dart';
+
 
 final _dnsCache = Map<String, List<InternetAddress>>();
 
@@ -9,19 +11,18 @@ class Node {
 
   final InternetAddress address;
   final int port;
-  bool open;
+  bool open = false;
 }
 
 class NodeService {
   static final instance = NodeService();
 
+  final pingTimeout = Duration(milliseconds: 750);
+
   Future<void> init() async {
-    // final runners = List.generate(6, (int index) => IsolateRunner.spawn());
-    // loadBalancer = LoadBalancer(await Future.wait(runners));
   }
 
   Future<void> close() async {
-    // return loadBalancer.close();
   }
 
   Future<List<Node>> startDiscovery(Definition definition) async {
@@ -45,14 +46,13 @@ class NodeService {
     return addresses.map((address) => Node(address, definition.port)).toList();
   }
 
-  Future<bool> checkNode(Node node, Duration timeout) async {
+  Future<bool> checkNode(Node node) async {
     try{
-      final socket = await Socket.connect(node.address, node.port, timeout: timeout);
+      final socket = await Socket.connect(node.address, node.port, timeout: Duration(milliseconds: 750));
       await socket.close();
-      return true;
-    }
-    catch (e) {
-      return false;
+      return Future<bool>.value(true);
+    } catch (e) {
+      return Future<bool>.value(false);
     }
   }
 
