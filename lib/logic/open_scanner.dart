@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:diginodes/logic/home_logic.dart';
@@ -8,9 +6,17 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
-class OpenScanner {
 
-  static final instance = OpenScanner();
+typedef OpenNodeAdded = void Function(Node bode);
+
+class OpenScanner {
+  OpenScanner({
+    @required NodeSet nodes,
+    OpenNodeAdded added,
+  }) : _nodes = nodes, _added = added;
+
+  final NodeSet _nodes;
+  final OpenNodeAdded _added;
 
   final _indexes = [
     ValueNotifier<int>(0),
@@ -20,6 +26,7 @@ class OpenScanner {
     ValueNotifier<int>(0),
     ValueNotifier<int>(0)
   ];
+
 
   ValueListenable<int> get one => _indexes[0];
   ValueListenable<int> get two => _indexes[1];
@@ -34,9 +41,11 @@ class OpenScanner {
   ValueNotifier<int> _openCount = new ValueNotifier<int>(0);
   ValueListenable<int> get openCount => _openCount;
 
+  int get _nodeCount => _nodes.length;
+
   int _currentMaxIndex() {
-    int currentMaxIndex = _indexes.fold(0, (prev, element) => math.max(prev, element.value));
-    if (currentMaxIndex < HomeLogic.instance.nodes.length - 1) {
+    final currentMaxIndex = _indexes.fold<int>(0, (prev, el) => math.max(prev, el.value));
+    if (currentMaxIndex < _nodeCount - 1) {
       return currentMaxIndex;
     } else {
       return -1;
@@ -65,24 +74,31 @@ class OpenScanner {
   }
 
   void _startScanner(int index) async {
-    if (HomeLogic.instance.nodes.length != 0) {
+    if (_nodeCount != 0) {
       _indexes[index].value = _currentMaxIndex() + 1;
-      Node nextNode = HomeLogic.instance.nodes[_indexes[index].value];
+      Node nextNode = _nodes[_indexes[index].value];
       if (!nextNode.open) {
         bool open = await NodeService.instance.checkNode(nextNode);
         nextNode.open = open;
         if (open) {
+          _added?.call(nextNode);
           _openCount.value++;
         }
       }
     }
     if (!_shutdown) {
-      await new Future.delayed(const Duration(seconds: 1));
+      int milliseconds;
+      if (_nodeCount < 100) {
+        milliseconds = 2500;
+      } else if (_nodeCount < 1000) {
+        milliseconds = 1500;
+      } else if (_nodeCount < 5000) {
+        milliseconds = 1000;
+      } else {
+        milliseconds = 750;
+      }
+      await Future.delayed(Duration(milliseconds: milliseconds));
       _startScanner(index);
     }
-  }
-
-  Node getOpenNode() {
-
   }
 }

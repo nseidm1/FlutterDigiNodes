@@ -37,7 +37,7 @@ abstract class Definition {
 
   String get coinName;
 
-  int get minProtocolVersion;
+  int get protocolVersion;
 
   int get port;
 
@@ -70,7 +70,7 @@ class DigiByteCoinDefinition implements Definition {
   final String coinName = "DigiByte";
 
   @override
-  final int minProtocolVersion = 70016;
+  final int protocolVersion = 70016;
 
   @override
   final int port = 12024;
@@ -99,7 +99,7 @@ class BitcoinCashCoinDefinition implements Definition {
   final String coinName = "Bitcoin Cash";
 
   @override
-  final int minProtocolVersion = 70015;
+  final int protocolVersion = 70015;
 
   @override
   final int port = 8333;
