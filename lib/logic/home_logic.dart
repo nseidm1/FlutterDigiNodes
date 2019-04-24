@@ -24,7 +24,7 @@ class HomeLogic {
   Completer _completer;
 
   var _sendNonce = 0;
-  var _crawlingIndex = 0;
+  var _sendAddressMessageCount = 0;
   var _crawlIndex = 0;
   bool shutdownFlag = false;
 
@@ -47,17 +47,23 @@ class HomeLogic {
 
   Future<void> _onCoinDefinitionChanged() async {
     _loadingDNS.value = true;
-    _nodes.clear();
-    _openScanner.reset();
-    _messages.clear();
-    _addrTimer?.cancel();
-    _crawlingIndex = 0;
+    _reset();
     _messages.add("Resolving DNS");
     _nodes.addAll(await NodeService.instance.startDiscovery(_coinDefinition.value));
     _openScanner.start();
     _messages.add("DNS complete");
     _crawlOpenNodes();
     _loadingDNS.value = false;
+  }
+
+  void _reset() {
+    _sendAddressMessageCount = 0;
+    _crawlIndex = 0;
+    _addrTimer?.cancel();
+    _nodes.clear();
+    _openNodes.clear();
+    _openScanner.reset();
+    _messages.clear();
   }
 
   void shutdown() {
@@ -95,8 +101,6 @@ class HomeLogic {
             processVersionMessage();
           } else if(message is AddressMessage) {
             processAddresses(message);
-          } else {
-            print('Unknown: $message');
           }
         }, onError: (e) {
           _completer.completeError(e);
@@ -123,8 +127,9 @@ class HomeLogic {
 
   Future<void> processAddresses(AddressMessage message) async {
     print('Got addresses: ${message.addresses}');
-    var nodes = List<Node>.from(message.addresses.map<Node>((peerAddress) =>
-        Node(InternetAddress(Uri.dataFromBytes(peerAddress.address).toString()), peerAddress.port, _coinDefinition.value)));
+    var nodes = List<Node>.from(
+        message.addresses.map<Node>((peerAddress) => Node(InternetAddress(Uri.dataFromBytes(peerAddress.address).toString()), peerAddress.port, _coinDefinition.value,),),
+    );
     int previousNodeCount = _nodes.length;
     _nodes.addAll(nodes);
     var newNodeCount = _nodes.length - previousNodeCount;
@@ -133,8 +138,7 @@ class HomeLogic {
     } else {
       _messages.add("No new nodes received");
     }
-    _addrTimer.cancel();
-    _completer.complete(true);
+    _close();
   }
 
   Future<void> processVersionMessage() async {
@@ -148,18 +152,17 @@ class HomeLogic {
   }
 
   Future<void> processAck() async {
-    await sendAddressMessage();
-    _addrTimer = Timer.periodic(Duration(milliseconds: 6000), (t) =>
+    _addrTimer = Timer.periodic(Duration(milliseconds: 3000), (t) =>
         sendAddressMessage());
   }
 
   Future<void> sendAddressMessage() async {
-    if (_crawlingIndex > 10) {
+    if (_sendAddressMessageCount > 10) {
       _close();
     } else {
       _messages.add("Sending getAddr Message");
       await _nodeConnection.sendMessage(GetAddressMessage());
-      _crawlingIndex++;
+      _sendAddressMessageCount++;
     }
   }
 
@@ -174,7 +177,7 @@ class HomeLogic {
       theirAddress: PeerAddress.localhost(services: services, port: node.def.port),
       nonce: ++_sendNonce,
       subVer: VersionMessage.LIBRARY_SUBVER,
-      lastHeight: 10000,
+      lastHeight: 0,
       relayBeforeFilter: false,
       coinName: node.def.coinName,
     );
@@ -187,7 +190,7 @@ class HomeLogic {
     if (!_completer.isCompleted) {
       _completer.complete(true);
     }
-    _crawlingIndex = 0;
+    _sendAddressMessageCount = 0;
   }
 
   void onShareButtonPressed() {

@@ -6,6 +6,7 @@ import 'package:bitcoin/wire.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:diginodes/coin_definitions.dart';
+import 'package:hex/hex.dart';
 import 'package:meta/meta.dart';
 
 final _dnsCache = Map<String, List<InternetAddress>>();
@@ -92,17 +93,18 @@ class NodeConnection {
       _node.port,
       timeout: const Duration(milliseconds: 750),
     );
-    _socket.setOption(SocketOption.tcpNoDelay, true);
     _socket.listen(_dataHandler, onError: _errorHandler, onDone: _doneHandler);
     _connected = true;
   }
 
   Future<void> sendMessage(Message message) async {
     try {
-      final bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
+      var bytes;
+      bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
       _socket.add(bytes);
+      await _socket.flush();
       print('Message sent $message');
-    } catch(e) {
+    } catch(e, st) {
       _homeLogicClose();
     }
   }
@@ -111,7 +113,7 @@ class NodeConnection {
   ///instead _homeLogicClose() is called in HomeLogic, which calls here.
   Future<void> close() async {
     _connected = false;
-    await _socket.close();
+    await _socket?.close();
     _socket?.destroy();
   }
 
@@ -137,6 +139,7 @@ class NodeConnection {
 
   void _errorHandler(error, StackTrace trace) {
     print('socket error: $error');
+    _homeLogicClose();
   }
 
   void _doneHandler() {
