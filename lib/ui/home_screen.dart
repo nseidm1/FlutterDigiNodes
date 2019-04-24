@@ -1,4 +1,3 @@
-import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
 import 'package:diginodes/logic/home_logic.dart';
 import 'package:flutter/material.dart';
@@ -58,14 +57,21 @@ class _HomeScreenState extends State<HomeScreen> {
                 text: 'Messages (123)',
               ),
               Expanded(
-                child: ListView.builder(
-                  itemCount: 50,
-                  itemBuilder: (BuildContext context, int index) {
-                    return ListTile(
-                      title: Text('Item #$index'),
-                    );
-                  },
-                ),
+                  child: AnimatedBuilder(
+                    animation: _logic.messages,
+                    builder: (BuildContext context, Widget child) {
+                      return ListView.builder(
+                        shrinkWrap: true,
+                        controller: _logic.messages.messagesScrollController,
+                        itemCount: _logic.messages.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          return ListTile(
+                            title: Text(_logic.messages.elementAt(index)),
+                          );
+                        },
+                      );
+                    },
+                  ),
               ),
               Container(
                 child: AnimatedBuilder(
@@ -83,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return _HomeListHeader(
                         text: 'Nodes (${_logic.nodesCount}) '
                             'Open(${_logic.openScanner.openCount.value}) '
-                            'Recent (0)\nCrawling (0)\n'
+                            'Recent (0)\nCrawling (${_logic.crawlIndex})\n'
                             'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value} - ${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
                       );
                     }

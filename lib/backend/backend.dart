@@ -84,6 +84,7 @@ class NodeConnection {
   bool get isConnected => _connected;
 
   Stream<Message> get incomingMessages => _incomingMessages.stream;
+  Socket get socket => _socket;
 
   Future<void> connect(Definition definition) async {
     _socket = await Socket.connect(
@@ -108,7 +109,7 @@ class NodeConnection {
     _socket?.destroy();
   }
 
-  void _dataHandler(List<int> data) {
+  Future<void> _dataHandler(List<int> data) async {
     _builder.add(data);
     final allBytes = _builder.toBytes();
     try {
@@ -118,7 +119,8 @@ class NodeConnection {
       _builder.clear();
       _builder.add(allBytes.sublist(message.byteSize));
     } catch (e) {
-      print('_dataHandler unsupported message: ${e}');
+      //Noisy
+      //print('_dataHandler unsupported message: ${e}');
     }
   }
 

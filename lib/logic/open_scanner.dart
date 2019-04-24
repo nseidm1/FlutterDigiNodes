@@ -52,7 +52,7 @@ class OpenScanner {
     }
   }
 
-  void start() {
+  Future<void> start() async {
     if (_running) {
       return;
     }
@@ -73,7 +73,7 @@ class OpenScanner {
     _indexes.forEach((i) => i.value = 0);
   }
 
-  void _startScanner(int index) async {
+  Future<void> _startScanner(int index) async {
     if (_nodeCount != 0) {
       _indexes[index].value = _currentMaxIndex() + 1;
       Node nextNode = _nodes[_indexes[index].value];
