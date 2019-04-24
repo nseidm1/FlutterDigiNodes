@@ -53,20 +53,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
               ),
-              _HomeListHeader(
-                text: 'Messages (123)',
+              AnimatedBuilder(
+                animation: _logic.messages,
+                builder: (BuildContext context, Widget child) {
+                  return _HomeListHeader(
+                    text: "Messages (${_logic.messages.length})",
+                  );
+                }
               ),
               Expanded(
                   child: AnimatedBuilder(
                     animation: _logic.messages,
                     builder: (BuildContext context, Widget child) {
                       return ListView.builder(
-                        shrinkWrap: true,
                         controller: _logic.messages.messagesScrollController,
                         itemCount: _logic.messages.length,
                         itemBuilder: (BuildContext context, int index) {
                           return ListTile(
-                            title: Text(_logic.messages.elementAt(index)),
+                            title: Center(child: Text(_logic.messages.elementAt(index))),
                           );
                         },
                       );
@@ -100,12 +104,12 @@ class _HomeScreenState extends State<HomeScreen> {
                   animation: _logic.nodes,
                   builder: (BuildContext context, Widget child) {
                     return ListView.builder(
+                      controller: _logic.nodes.nodesScrollController,
                       itemCount: _logic.nodes.length,
                       itemBuilder: (BuildContext context, int index) {
                         final node = _logic.nodes[index];
                         return ListTile(
-                          title: Text('${node.address}:${node.port}'),
-                          subtitle: Text('${node.open}'),
+                          title: Center(child: Text('${node.address.address}')),
                         );
                       },
                     );

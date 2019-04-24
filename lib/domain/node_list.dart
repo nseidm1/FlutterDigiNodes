@@ -1,9 +1,15 @@
 import 'package:collection/collection.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 
 class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   NodeSet() : super({});
+
+  ScrollController _nodesScrollController = ScrollController();
+
+  ScrollController get nodesScrollController => _nodesScrollController;
+
 
   NodeSet.fromIterable(Iterable<Node> iterable)
       : super(Set<Node>.from(iterable));
@@ -22,6 +28,14 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   void addAll(Iterable<Node> elements) {
     super.addAll(elements);
     notifyListeners();
+    if (length > 5) {
+      try {
+        _nodesScrollController.animateTo(_nodesScrollController.position.maxScrollExtent,
+            curve: Curves.easeOutBack, duration: Duration (milliseconds: 500));
+      } catch(e) {
+        print('${e}');
+      }
+    }
   }
 
   @override

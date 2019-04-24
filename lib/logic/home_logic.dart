@@ -6,7 +6,7 @@ import 'package:bitcoin/wire.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
 import 'package:diginodes/domain/node_list.dart';
-import 'package:diginodes/domain/string_list.dart';
+import 'package:diginodes/domain/message_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diginodes/logic/open_scanner.dart';
 import 'package:flutter/widgets.dart';
@@ -17,11 +17,24 @@ class HomeLogic {
   final _nodes = NodeSet();
   final _messages = StringList(List());
   final _openNodes = NodeSet();
-  var _sendNonce = 0;
-  Timer _addrTimer;
-  var _addrCounter = 0;
 
+  Timer _addrTimer;
+  NodeConnection _nodeConnection;
   OpenScanner _openScanner;
+  Completer _completer;
+
+  var _sendNonce = 0;
+  var _crawlingIndex = 0;
+  var _crawlIndex = 0;
+  bool shutdownFlag = false;
+
+  ValueListenable<bool> get loadingDNS => _loadingDNS;
+  ValueListenable<Definition> get coinDefinition => _coinDefinition;
+  NodeSet get nodes => _nodes;
+  StringList get messages => _messages;
+  int get nodesCount => _nodes.length;
+  OpenScanner get openScanner => _openScanner;
+  int get crawlIndex => _crawlIndex;
 
   HomeLogic() {
     _openScanner = OpenScanner(
@@ -32,24 +45,13 @@ class HomeLogic {
     _coinDefinition.value = coinDefinitions[0];
   }
 
-  var _crawlIndex = 0;
-  bool shutdownFlag = false;
-
-  ValueListenable<bool> get loadingDNS => _loadingDNS;
-  ValueListenable<Definition> get coinDefinition => _coinDefinition;
-  NodeSet get nodes => _nodes;
-  StringList get messages => _messages;
-
-  int get nodesCount => _nodes.length;
-
-  OpenScanner get openScanner => _openScanner;
-  
-  int get crawlIndex => _crawlIndex;
-
   Future<void> _onCoinDefinitionChanged() async {
     _loadingDNS.value = true;
     _nodes.clear();
     _openScanner.reset();
+    _messages.clear();
+    _addrTimer?.cancel();
+    _crawlingIndex = 0;
     _messages.add("Resolving DNS");
     _nodes.addAll(await NodeService.instance.startDiscovery(_coinDefinition.value));
     _openScanner.start();
@@ -58,16 +60,16 @@ class HomeLogic {
     _loadingDNS.value = false;
   }
 
-  Future<void> shutdown() async {
+  void shutdown() {
     shutdownFlag = true;
     _openScanner.shutdown();
   }
 
-  Future<void> _openNodeAdded(Node node) async {
+  void _openNodeAdded(Node node) {
     _openNodes.add(node);
   }
 
-  Future<Node> _getNextOpenNode() async {
+  Node _getNextOpenNode() {
     if (_openNodes.length == 0) {
       return null;
     }
@@ -76,38 +78,41 @@ class HomeLogic {
   }
 
   Future<void> _crawlOpenNodes() async {
-    final nextOpenNode = await _getNextOpenNode();
+    final nextOpenNode = _getNextOpenNode();
     if (nextOpenNode != null) {
-      final connection = NodeConnection(nextOpenNode);
-      final completer = Completer<bool>();
+      _nodeConnection = NodeConnection(
+          close: _close, 
+          node: nextOpenNode,
+      );
+      _completer = Completer<bool>();
       try{
-        connection.incomingMessages.listen((Message message) {
+        _nodeConnection.incomingMessages.listen((Message message) {
           if (message is PingMessage) {
-            processPing(connection, message);
+            processPing(message);
           } else if (message is VerackMessage) {
-            processAck(connection, completer);
+            processAck();
           } else if(message is VersionMessage) {
-            processVersionMessage(connection);
+            processVersionMessage();
           } else if(message is AddressMessage) {
-            processAddresses(connection, completer, message);
+            processAddresses(message);
           } else {
             print('Unknown: $message');
           }
         }, onError: (e) {
-          completer.completeError(e);
+          _completer.completeError(e);
         });
-        await connection.connect(_coinDefinition.value);
+        await _nodeConnection.connect(_coinDefinition.value);
         print('connected $nextOpenNode');
         _messages.add("New node connected: $_crawlIndex");
-        await connection.sendMessage(await _getOutVMesg(nextOpenNode));
-        await completer.future;
-        print('completed');
+        await _nodeConnection.sendMessage(_getMyVersionMessage(nextOpenNode));
+        await _completer.future;
+        print('next node');
       }
       catch (e, st) {
         print('$e');//\n$st');
       }
       finally{
-        connection.close();
+        _close();
       }
     }
     if (!shutdownFlag) {
@@ -116,7 +121,7 @@ class HomeLogic {
     }
   }
 
-  Future<void> processAddresses(NodeConnection connection, Completer<bool> completer, AddressMessage message) async {
+  Future<void> processAddresses(AddressMessage message) async {
     print('Got addresses: ${message.addresses}');
     var nodes = List<Node>.from(message.addresses.map<Node>((peerAddress) =>
         Node(InternetAddress(Uri.dataFromBytes(peerAddress.address).toString()), peerAddress.port, _coinDefinition.value)));
@@ -129,52 +134,36 @@ class HomeLogic {
       _messages.add("No new nodes received");
     }
     _addrTimer.cancel();
-    completer.complete(true);
+    _completer.complete(true);
   }
 
-  Future<void> processVersionMessage(NodeConnection connection) async {
-    await connection.sendMessage(VerackMessage());
+  Future<void> processVersionMessage() async {
+    await _nodeConnection.sendMessage(VerackMessage());
   }
 
-  Future<void> processPing(NodeConnection connection, PingMessage message) async {
+  Future<void> processPing(PingMessage message) async {
     if (message.hasNonce) {
-      await connection.sendMessage(PongMessage(message.nonce));
+      await _nodeConnection.sendMessage(PongMessage(message.nonce));
     }
   }
 
-  Future<void> processAck(NodeConnection connection, Completer<bool> completer) async {
-    _addrTimer = Timer.periodic(Duration(milliseconds: 3000), (t) =>
-        sendAddrMessage(connection, completer));
-    await connection.sendMessage(GetAddressMessage());
+  Future<void> processAck() async {
+    await sendAddressMessage();
+    _addrTimer = Timer.periodic(Duration(milliseconds: 6000), (t) =>
+        sendAddressMessage());
   }
 
-  Future<void> sendAddrMessage(NodeConnection connection, Completer<bool> completer) async {
-    if (_addrCounter > 10) {
-      connection.close();
-      _addrTimer.cancel();
-      completer.complete(true);
-      _addrCounter = 0;
+  Future<void> sendAddressMessage() async {
+    if (_crawlingIndex > 10) {
+      _close();
     } else {
       _messages.add("Sending getAddr Message");
-      try {
-        await connection.sendMessage(GetAddressMessage());
-        _addrCounter++;
-      } catch(e) {
-        _addrTimer.cancel();
-        completer.complete(true);
-      }
+      await _nodeConnection.sendMessage(GetAddressMessage());
+      _crawlingIndex++;
     }
   }
 
-  void onShareButtonPressed() {
-    //
-  }
-
-  void onAddManualNodePressed() {
-
-  }
-
-  Future<Message> _getOutVMesg(Node node) async {
+  Message _getMyVersionMessage(Node node) {
     final services = BigInteger.ZERO;
     final time = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
     VersionMessage ver = new VersionMessage(
@@ -190,5 +179,22 @@ class HomeLogic {
       coinName: node.def.coinName,
     );
     return ver;
+  }
+
+  void _close() {
+    _nodeConnection?.close();
+    _addrTimer?.cancel();
+    if (!_completer.isCompleted) {
+      _completer.complete(true);
+    }
+    _crawlingIndex = 0;
+  }
+
+  void onShareButtonPressed() {
+    //
+  }
+
+  void onAddManualNodePressed() {
+
   }
 }

@@ -14,9 +14,9 @@ class StringList extends DelegatingList<String> with ChangeNotifier {
   void add(String element) {
     super.add(element);
     notifyListeners();
-    if (length > 3) {
+    if (length > 5) {
       _messagesScrollController.animateTo(_messagesScrollController.position.maxScrollExtent + 50,
-          curve: Curves.linear, duration: Duration (milliseconds: 500));
+          curve: Curves.easeOutBack, duration: Duration (milliseconds: 500));
     }
   }
 }

@@ -6,6 +6,7 @@ import 'package:bitcoin/wire.dart';
 import 'package:collection/collection.dart';
 import 'package:convert/convert.dart';
 import 'package:diginodes/coin_definitions.dart';
+import 'package:meta/meta.dart';
 
 final _dnsCache = Map<String, List<InternetAddress>>();
 
@@ -63,19 +64,18 @@ class NodeService {
       return Future<bool>.value(false);
     }
   }
-
-// 1. lookup dns
-// 2. check nodes are open
-// 3. connect to open nodes
-// 4. send handshake and ack
-// 5. send repeated getaddr until we get two responses
-// 6. disconnect
 }
 
+typedef Close = void Function();
+
 class NodeConnection {
-  NodeConnection(this._node);
+  NodeConnection({
+    @required Close close,
+    @required Node node,
+  }): _homeLogicClose = close, _node = node;
 
   final Node _node;
+  final Close _homeLogicClose;
   final _builder = BytesBuilder();
   final _incomingMessages = StreamController<Message>.broadcast();
   Socket _socket;
@@ -98,11 +98,17 @@ class NodeConnection {
   }
 
   Future<void> sendMessage(Message message) async {
-    final bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
-    print('sending message $message');
-    _socket.add(bytes);
+    try {
+      final bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
+      _socket.add(bytes);
+      print('Message sent $message');
+    } catch(e) {
+      _homeLogicClose();
+    }
   }
 
+  ///This is not called directly from this class,
+  ///instead _homeLogicClose() is called in HomeLogic, which calls here.
   Future<void> close() async {
     _connected = false;
     await _socket.close();
@@ -114,13 +120,18 @@ class NodeConnection {
     final allBytes = _builder.toBytes();
     try {
       final message = Message.decode(allBytes, _node.def.protocolVersion);
-      print('_dataHandler decoded: ${message}');
+      print('_dataHandler decoded: $message');
       _incomingMessages.add(message);
       _builder.clear();
       _builder.add(allBytes.sublist(message.byteSize));
-    } catch (e) {
-      //Noisy
-      //print('_dataHandler unsupported message: ${e}');
+    } catch(e, st) {
+      if (e is SerializationException) {
+        //We don't have a message yet
+      } else if (e is ArgumentError) {
+        //Unsupported message
+      } else {
+        print('_dataHandler $e\n$st');
+      }
     }
   }
 
@@ -129,6 +140,6 @@ class NodeConnection {
   }
 
   void _doneHandler() {
-    close();
+    _homeLogicClose();
   }
 }
