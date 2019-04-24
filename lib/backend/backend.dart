@@ -98,10 +98,8 @@ class NodeConnection {
 
   Future<void> sendMessage(Message message) async {
     final bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
-    print('sending message $message: ${hex.encode(bytes)}');
+    print('sending message $message');
     _socket.add(bytes);
-    await _socket.flush();
-    print('sending message done: $message');
   }
 
   Future<void> close() async {
@@ -111,17 +109,16 @@ class NodeConnection {
   }
 
   void _dataHandler(List<int> data) {
-    print('data received ${data.length}');
     _builder.add(data);
     final allBytes = _builder.toBytes();
     try {
       final message = Message.decode(allBytes, _node.def.protocolVersion);
-      print('Decoded: ${message}');
+      print('_dataHandler decoded: ${message}');
       _incomingMessages.add(message);
       _builder.clear();
       _builder.add(allBytes.sublist(message.byteSize));
-    } catch (e, st) {
-      print('_dataHandler: $e\n$st');
+    } catch (e) {
+      print('_dataHandler unsupported message: ${e}');
     }
   }
 

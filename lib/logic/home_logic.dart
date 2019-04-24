@@ -14,6 +14,8 @@ class HomeLogic {
   final _nodes = NodeSet();
   final _openNodes = NodeSet();
   var _sendNonce = 0;
+  Timer _addrTimer;
+  var _addrCounter = 0;
 
   OpenScanner _openScanner;
 
@@ -71,17 +73,17 @@ class HomeLogic {
       final completer = Completer<bool>();
       try{
         connection.incomingMessages.listen((Message message) {
-          if (message is VersionMessage) {
-          }
-          if(message is VerackMessage) {
-            connection.sendMessage(VerackMessage());
+          
+          if (message is VerackMessage) {
+            _addrTimer = Timer.periodic(Duration(milliseconds: 2500), (t) => sendAddrMessage(connection, completer));
             connection.sendMessage(GetAddressMessage());
-          }
-          else if(message is AddressMessage) {
+          } else if(message is VersionMessage) {
+            connection.sendMessage(VerackMessage());
+          } else if(message is AddressMessage) {
             print('Got addresses: ${message.addresses}');
+            _addrTimer.cancel();
             completer.complete(true);
-          }
-          else {
+          } else {
             print('Unknown: ${message}');
           }
         }, onError: (e, st) {
@@ -90,9 +92,6 @@ class HomeLogic {
         await connection.connect(_coinDefinition.value);
         print('connected ${nextOpenNode}');
         await connection.sendMessage(_getOutVMesg(nextOpenNode));
-        Future.delayed(const Duration(seconds: 10), (){
-          completer.completeError(new StateError('Timed-out ${nextOpenNode}'));
-        });
         await completer.future;
         print('completed');
       }
@@ -106,6 +105,17 @@ class HomeLogic {
     if (!shutdownFlag) {
       await Future.delayed(const Duration(milliseconds: 2500));
       _crawlOpenNodes();
+    }
+  }
+
+  void sendAddrMessage(NodeConnection connection, Completer<bool> completer) {
+    connection.sendMessage(GetAddressMessage());
+    _addrCounter++;
+    if (_addrCounter > 20) {
+      connection.close();
+      _addrTimer.cancel();
+      completer.complete(true);
+      _addrCounter = 0;
     }
   }
 
