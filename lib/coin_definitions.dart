@@ -41,7 +41,9 @@ abstract class Definition {
 
   int get port;
 
-  int get packetMagic;
+  String get packetMagic;
+
+  int get packetMagicInt;
 }
 
 class DigiByteCoinDefinition implements Definition {
@@ -76,7 +78,10 @@ class DigiByteCoinDefinition implements Definition {
   final int port = 12024;
 
   @override
-  final int packetMagic = 0xfac3b6da;
+  final String packetMagic = 'fac3b6da';
+
+  @override
+  final int packetMagicInt = 0xfac3b6da;
 }
 
 class BitcoinCashCoinDefinition implements Definition {
@@ -105,5 +110,8 @@ class BitcoinCashCoinDefinition implements Definition {
   final int port = 8333;
 
   @override
-  final int packetMagic = 0xe3e1f3e8;
+  final String packetMagic = '0xe3e1f3e8';
+
+  @override
+  final int packetMagicInt = 0xe3e1f3e8;
 }

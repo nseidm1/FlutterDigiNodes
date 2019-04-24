@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
@@ -12,6 +13,7 @@ class HomeLogic {
   final _loadingDNS = ValueNotifier<bool>(false);
   final _nodes = NodeSet();
   final _openNodes = NodeSet();
+  var _sendNonce = 0;
 
   OpenScanner _openScanner;
 
@@ -69,7 +71,10 @@ class HomeLogic {
       final completer = Completer<bool>();
       try{
         connection.incomingMessages.listen((Message message) {
+          if (message is VersionMessage) {
+          }
           if(message is VerackMessage) {
+            connection.sendMessage(VerackMessage());
             connection.sendMessage(GetAddressMessage());
           }
           else if(message is AddressMessage) {
@@ -84,9 +89,10 @@ class HomeLogic {
         });
         await connection.connect(_coinDefinition.value);
         print('connected ${nextOpenNode}');
-        /*Future.delayed(const Duration(seconds: 3), (){
+        await connection.sendMessage(_getOutVMesg(nextOpenNode));
+        Future.delayed(const Duration(seconds: 10), (){
           completer.completeError(new StateError('Timed-out ${nextOpenNode}'));
-        });*/
+        });
         await completer.future;
         print('completed');
       }
@@ -109,5 +115,23 @@ class HomeLogic {
 
   void onAddManualNodePressed() {
 
+  }
+
+  Message _getOutVMesg(Node node) {
+    final services = BigInteger.ZERO;
+    final time = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
+    VersionMessage ver = new VersionMessage(
+      clientVersion: node.def.protocolVersion,
+      services: services,
+      time: time,
+      myAddress: PeerAddress.localhost(services: services, port: node.def.port),
+      theirAddress: PeerAddress.localhost(services: services, port: node.def.port),
+      nonce: ++_sendNonce,
+      subVer: VersionMessage.LIBRARY_SUBVER,
+      lastHeight: 10000,
+      relayBeforeFilter: false,
+      coinName: node.def.coinName,
+    );
+    return ver;
   }
 }

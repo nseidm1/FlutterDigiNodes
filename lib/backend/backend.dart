@@ -3,6 +3,8 @@ import 'dart:io';
 
 import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
+import 'package:collection/collection.dart';
+import 'package:convert/convert.dart';
 import 'package:diginodes/coin_definitions.dart';
 
 final _dnsCache = Map<String, List<InternetAddress>>();
@@ -70,8 +72,6 @@ class NodeService {
 // 6. disconnect
 }
 
-int _sendNonce = 0;
-
 class NodeConnection {
   NodeConnection(this._node);
 
@@ -81,7 +81,7 @@ class NodeConnection {
   Socket _socket;
   bool _connected = false;
 
-  bool get isConnectd => _connected;
+  bool get isConnected => _connected;
 
   Stream<Message> get incomingMessages => _incomingMessages.stream;
 
@@ -91,30 +91,14 @@ class NodeConnection {
       _node.port,
       timeout: const Duration(milliseconds: 750),
     );
-
+    _socket.setOption(SocketOption.tcpNoDelay, true);
     _socket.listen(_dataHandler, onError: _errorHandler, onDone: _doneHandler);
-    //_socket.setOption(SocketOption.tcpNoDelay, true);
     _connected = true;
-
-    final services = BigInteger.ZERO;
-    final time = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
-    VersionMessage ver = new VersionMessage(
-      clientVersion: _node.def.protocolVersion,
-      services: services,
-      time: time,
-      myAddress: PeerAddress.localhost(services: services, port: _socket.port),
-      theirAddress: PeerAddress.localhost(services: services, port: _socket.port),
-      nonce: ++_sendNonce,
-      subVer: VersionMessage.LIBRARY_SUBVER,
-      lastHeight: 0,
-      relayBeforeFilter: false,
-    );
-    await sendMessage(ver);
   }
 
   Future<void> sendMessage(Message message) async {
     final bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
-    print('sending message $message: $bytes');
+    print('sending message $message: ${hex.encode(bytes)}');
     _socket.add(bytes);
     await _socket.flush();
     print('sending message done: $message');
@@ -131,13 +115,13 @@ class NodeConnection {
     _builder.add(data);
     final allBytes = _builder.toBytes();
     try {
-      final message = Message.decode(allBytes, _node.def.packetMagic, _node.def.protocolVersion);
+      final message = Message.decode(allBytes, _node.def.protocolVersion);
       print('Decoded: ${message}');
       _incomingMessages.add(message);
       _builder.clear();
       _builder.add(allBytes.sublist(message.byteSize));
-    } catch (e) {
-      print('_dataHandler: $e');
+    } catch (e, st) {
+      print('_dataHandler: $e\n$st');
     }
   }
 

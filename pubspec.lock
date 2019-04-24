@@ -30,7 +30,7 @@ packages:
     source: hosted
     version: "1.0.1"
   bignum:
-    dependency: "direct main"
+    dependency: transitive
     description:
       path: "."
       ref: HEAD
@@ -43,7 +43,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: "472e3cc0f4ba9559a8436105731e7f600258b1e1"
+      resolved-ref: "726934e34f66c60bc45d0d39d60b53e3b90ddc8b"
       url: "https://github.com/nseidm1/dart-bitcoin.git"
     source: git
     version: "0.0.0"
@@ -115,6 +115,13 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  hex:
+    dependency: "direct main"
+    description:
+      name: hex
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "0.1.2"
   http:
     dependency: transitive
     description:

@@ -9,8 +9,7 @@ dependencies:
   socket_io: ^0.9.0+2
   crypto: any
   cryptoutils: any
-  bignum:
-    git: https://github.com/nseidm1/dart-bignum.git
+  hex: ^0.1.2
   bitcoin:
     git: https://github.com/nseidm1/dart-bitcoin.git
   flutter:
