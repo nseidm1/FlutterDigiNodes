@@ -93,6 +93,7 @@ class NodeConnection {
       _node.port,
       timeout: const Duration(milliseconds: 750),
     );
+    _socket.setOption(SocketOption.tcpNoDelay, true);
     _socket.listen(_dataHandler, onError: _errorHandler, onDone: _doneHandler);
     _connected = true;
   }
@@ -100,11 +101,10 @@ class NodeConnection {
   Future<void> sendMessage(Message message) async {
     try {
       var bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
-      print('message bytes: ${HEX.encode(bytes)}');
+      //print('message bytes: ${HEX.encode(bytes)}');
       _socket.add(bytes);
-      await _socket.flush();
       print('Message sent $message');
-    } catch(e, st) {
+    } catch(e) {
       _homeLogicClose();
     }
   }
@@ -129,8 +129,10 @@ class NodeConnection {
     } catch(e, st) {
       if (e is SerializationException) {
         //We don't have a message yet
+        print('Message not yet ready $e');
       } else if (e is ArgumentError) {
         //Unsupported message
+        print('Unsupported message $e');
       } else {
         print('_dataHandler $e\n$st');
       }
