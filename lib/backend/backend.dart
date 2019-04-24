@@ -99,8 +99,8 @@ class NodeConnection {
 
   Future<void> sendMessage(Message message) async {
     try {
-      var bytes;
-      bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
+      var bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
+      print('message bytes: ${HEX.encode(bytes)}');
       _socket.add(bytes);
       await _socket.flush();
       print('Message sent $message');

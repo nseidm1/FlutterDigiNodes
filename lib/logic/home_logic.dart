@@ -142,6 +142,7 @@ class HomeLogic {
   }
 
   Future<void> processVersionMessage() async {
+    //await Future.delayed(Duration(milliseconds: 5000));
     await _nodeConnection.sendMessage(VerackMessage());
   }
 
@@ -152,7 +153,7 @@ class HomeLogic {
   }
 
   Future<void> processAck() async {
-    _addrTimer = Timer.periodic(Duration(milliseconds: 3000), (t) =>
+    _addrTimer = Timer.periodic(Duration(milliseconds: 6000), (t) =>
         sendAddressMessage());
   }
 
@@ -161,7 +162,7 @@ class HomeLogic {
       _close();
     } else {
       _messages.add("Sending getAddr Message");
-      await _nodeConnection.sendMessage(GetAddressMessage());
+      await _nodeConnection.sendMessage(GetAddressMessage.empty());
       _sendAddressMessageCount++;
     }
   }
