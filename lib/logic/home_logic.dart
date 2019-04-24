@@ -73,7 +73,7 @@ class HomeLogic {
       final completer = Completer<bool>();
       try{
         connection.incomingMessages.listen((Message message) {
-          
+
           if (message is VerackMessage) {
             _addrTimer = Timer.periodic(Duration(milliseconds: 2500), (t) => sendAddrMessage(connection, completer));
             connection.sendMessage(GetAddressMessage());
