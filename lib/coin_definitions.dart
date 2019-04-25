@@ -5,29 +5,6 @@ final coinDefinitions = const <Definition>[
   BitcoinCashCoinDefinition(),
 ];
 
-/*
-0 -> init(DigiByteCoinDefition.get())
-1 -> init(BitcoinCoinDefition.get())
-2 -> init(VertCoinDefinition.get())
-3 -> init(RapidsCoinDefition.get())
-4 -> init(DogeCoinDefition.get())
-5 -> init(ZCashCoinDefition.get())
-6 -> init(DashCoinDefinition.get())
-7 -> init(BitcoinGoldCoinDefinition.get())
-8 -> init(BitcoinCashCoinDefinition.get())
-9 -> init(BitcoinDiamondCoinDefinition.get())
-10 -> init(BitcoinSVCoinDefinition.get())
-11 -> init(LitecoinDefinition.get())
-12 -> init(BlocknetDefinition.get())
-13 -> init(ZCoinDefinition.get())
-14 -> init(KomodoDefinition.get())
-15 -> init(StratisDefinition.get())
-16 -> init(PivxCoinDefinition.get())
-17 -> init(MueCoinDefinition.get())
-18 -> init(PhoreCoinDefinition.get())
-19 -> init(SyscoinDefinition.get())
-*/
-
 abstract class Definition {
   const Definition();
 
@@ -53,17 +30,14 @@ class DigiByteCoinDefinition implements Definition {
   @override
   final List<String> dnsSeeds = const <String>[
     "seed.digibyteservers.io",
-    "seed1.digibyte.co",
     "seed2.hashdragon.com",
     "dgb.cryptoservices.net",
-    "digibytewiki.com",
     "digiexplorer.info",
     "seed1.digibyte.io",
     "seed2.digibyte.io",
     "seed3.digibyte.io",
     "digihash.co",
     "seed.digibyteprojects.com",
-    "seed.digibyte.io",
   ];
 
   @override

@@ -24,6 +24,16 @@ class Node {
   String toString() {
     return 'Node{address: $address, port: $port, open: $open}';
   }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+          other is Node &&
+              runtimeType == other.runtimeType &&
+              address == other.address;
+
+  @override
+  int get hashCode => address.hashCode;
 }
 
 class NodeService {

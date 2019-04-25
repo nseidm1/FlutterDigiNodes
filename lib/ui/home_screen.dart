@@ -41,18 +41,6 @@ class _HomeScreenState extends State<HomeScreen> {
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              Padding(
-                padding: const EdgeInsets.fromLTRB(8.0, 0.0, 0.0, 12.0),
-                child: Row(
-                  children: <Widget>[
-                    Expanded(child: TextField()),
-                    FlatButton(
-                      onPressed: _logic.onAddManualNodePressed,
-                      child: Text('ADD'),
-                    ),
-                  ],
-                ),
-              ),
               AnimatedBuilder(
                 animation: _logic.messages,
                 builder: (BuildContext context, Widget child) {
@@ -93,7 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return _HomeListHeader(
                         text: 'Nodes (${_logic.nodesCount}) '
                             'Open(${_logic.openScanner.openCount.value}) '
-                            'Recent (0)\nCrawling (${_logic.crawlIndex})\n'
+                            'Recent (0)\nCrawling (${_logic.nodeProcessor.crawlIndex})\n'
                             'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value} - ${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
                       );
                     }

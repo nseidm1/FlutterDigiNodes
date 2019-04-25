@@ -21,6 +21,7 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   bool add(Node value) {
     final result = super.add(value);
     notifyListeners();
+    scrollToBottom();
     return result;
   }
 
@@ -28,13 +29,14 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   void addAll(Iterable<Node> elements) {
     super.addAll(elements);
     notifyListeners();
-    if (length > 5) {
-      try {
-        _nodesScrollController.animateTo(_nodesScrollController.position.maxScrollExtent,
-            curve: Curves.easeOutBack, duration: Duration (milliseconds: 500));
-      } catch(e) {
-        print('${e}');
-      }
+    scrollToBottom();
+  }
+
+  void scrollToBottom() {
+    int totalPosition = _nodesScrollController.positions.length;
+    if (totalPosition > 0 && _nodesScrollController.positions.elementAt(totalPosition - 1).maxScrollExtent != null) {
+      _nodesScrollController.animateTo(_nodesScrollController.position.maxScrollExtent,
+          curve: Curves.easeOutBack, duration: Duration (milliseconds: 500));
     }
   }
 
