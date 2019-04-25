@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
-import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
-import 'package:collection/collection.dart';
-import 'package:convert/convert.dart';
 import 'package:diginodes/coin_definitions.dart';
 import 'package:hex/hex.dart';
 import 'package:meta/meta.dart';
+import "package:bytes/bytes.dart" as bytes;
+
 
 final _dnsCache = Map<String, List<InternetAddress>>();
 
@@ -113,30 +113,59 @@ class NodeConnection {
   ///instead _homeLogicClose() is called in HomeLogic, which calls here.
   Future<void> close() async {
     _connected = false;
-    await _socket?.close();
     _socket?.destroy();
   }
 
   Future<void> _dataHandler(List<int> data) async {
     _builder.add(data);
-    final allBytes = _builder.toBytes();
+    attemptToFindMessage();
+  }
+
+  void attemptToFindMessage() {
     try {
-      final message = Message.decode(allBytes, _node.def.protocolVersion);
-      print('_dataHandler decoded: $message');
-      _incomingMessages.add(message);
-      _builder.clear();
-      _builder.add(allBytes.sublist(message.byteSize));
-    } catch(e, st) {
-      if (e is SerializationException) {
-        //We don't have a message yet
-        print('Message not yet ready $e');
-      } else if (e is ArgumentError) {
-        //Unsupported message
-        print('Unsupported message $e');
-      } else {
-        print('_dataHandler $e\n$st');
+      attemptToDeserializeMessage();
+    } catch(e) {
+      if (e is ArgumentError) {
+        pruneUnsupportedMessage();
+        attemptToFindMessage();
       }
     }
+  }
+
+  void attemptToDeserializeMessage() {
+    final allBytes = _builder.toBytes();
+    final message = Message.decode(allBytes, _node.def.protocolVersion);
+    print('_dataHandler decoded: $message');
+    _incomingMessages.add(message);
+    _builder.clear();
+    _builder.add(allBytes.sublist(message.byteSize));
+  }
+
+  void pruneUnsupportedMessage() {
+    final bytes = _builder.toBytes();
+    int offset = findSecondMagicPacketOffset(_builder.toBytes());
+    if (offset != -1) {
+      _builder.clear();
+      _builder.add(bytes.sublist(offset));
+    } else {
+      _builder.clear();
+    }
+  }
+
+  int findSecondMagicPacketOffset(List<int> bytes) {
+    final packetMagic = _node.def.packetMagic;
+    final allBytes = Uint8List.fromList(bytes).buffer.asByteData();
+    var magicOccurrence = 0;
+    for(int i = 0; i < allBytes.lengthInBytes - 4; i++){
+      if(allBytes.getUint32(i, Endian.big) == packetMagic){
+        if (magicOccurrence == 1) {
+          return i;
+        } else {
+          magicOccurrence++;
+        }
+      }
+    }
+    return -1;
   }
 
   void _errorHandler(error, StackTrace trace) {

@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
+import 'package:collection/collection.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
 import 'package:diginodes/domain/node_list.dart';
@@ -10,6 +12,7 @@ import 'package:diginodes/domain/message_list.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diginodes/logic/open_scanner.dart';
 import 'package:flutter/widgets.dart';
+import 'package:hex/hex.dart';
 
 class HomeLogic {
   final _coinDefinition = ValueNotifier<Definition>(null);
@@ -91,16 +94,21 @@ class HomeLogic {
           node: nextOpenNode,
       );
       _completer = Completer<bool>();
+      Timer timeout;
       try{
         _nodeConnection.incomingMessages.listen((Message message) {
           if (message is PingMessage) {
-            processPing(message);
+            if (message.hasNonce && message.nonce > 0) {
+              _nodeConnection.sendMessage(PongMessage(message.nonce));
+            }
           } else if (message is VerackMessage) {
-            processAck();
+            timeout.cancel();
+            _addrTimer = Timer.periodic(Duration(milliseconds: 6000), (t) =>
+                _sendAddressMessage());
           } else if(message is VersionMessage) {
-            processVersionMessage();
+            _nodeConnection.sendMessage(VerackMessage());
           } else if(message is AddressMessage) {
-            processAddresses(message);
+            _processAddresses(message);
           }
         }, onError: (e) {
           _completer.completeError(e);
@@ -109,6 +117,7 @@ class HomeLogic {
         print('connected $nextOpenNode');
         _messages.add("New node connected: $_crawlIndex");
         await _nodeConnection.sendMessage(_getMyVersionMessage(nextOpenNode));
+        timeout = Timer(Duration(milliseconds: 15000), () => _completer.complete(true));
         await _completer.future;
         print('next node');
       }
@@ -125,44 +134,46 @@ class HomeLogic {
     }
   }
 
-  Future<void> processAddresses(AddressMessage message) async {
-    print('Got addresses: ${message.addresses}');
-    var nodes = List<Node>.from(
-        message.addresses.map<Node>((peerAddress) => Node(InternetAddress(Uri.dataFromBytes(peerAddress.address).toString()), peerAddress.port, _coinDefinition.value,),),
-    );
+  Future<void> _processAddresses(AddressMessage message) async {
+    message.addresses.forEach((peer) => print(HEX.encode(peer.address)));
+    var nodes = List<Node>();
+    for (PeerAddress peerAddress in message.addresses) {
+      try {
+        InternetAddress internetAddress = getInternetAddress(peerAddress.address);
+        print('Internet Address: $internetAddress');
+        nodes.add(Node(internetAddress, peerAddress.port, _coinDefinition.value));
+      } catch(e){
+
+      }
+    }
     int previousNodeCount = _nodes.length;
     _nodes.addAll(nodes);
     var newNodeCount = _nodes.length - previousNodeCount;
     if (newNodeCount > 0) {
-      _messages.add("New nodes received: ${newNodeCount}");
+      _messages.add("New nodes received: $newNodeCount");
     } else {
       _messages.add("No new nodes received");
     }
     _close();
   }
 
-  Future<void> processVersionMessage() async {
-    //await Future.delayed(Duration(milliseconds: 5000));
-    await _nodeConnection.sendMessage(VerackMessage());
-  }
-
-  Future<void> processPing(PingMessage message) async {
-    if (message.hasNonce) {
-      await _nodeConnection.sendMessage(PongMessage(message.nonce));
+  InternetAddress getInternetAddress(List<int> address) {
+    const equality = ListEquality<int>();
+    if (equality.equals(address.sublist(0, 12), const <int>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF])) {
+      return InternetAddress(address.sublist(12).map((el) => el.toRadixString(10)).join('.'));
+    } else {
+      final view = Uint8List.fromList(address).buffer.asUint16List();
+      return InternetAddress(view.map((el) => el.toRadixString(16)).join(':'));
     }
   }
 
-  Future<void> processAck() async {
-    _addrTimer = Timer.periodic(Duration(milliseconds: 6000), (t) =>
-        sendAddressMessage());
-  }
-
-  Future<void> sendAddressMessage() async {
+  void _sendAddressMessage() {
     if (_sendAddressMessageCount > 10) {
       _close();
     } else {
       _messages.add("Sending getAddr Message");
-      await _nodeConnection.sendMessage(GetAddressMessage.empty());
+      _nodeConnection.sendMessage(PingMessage.empty());
+      _nodeConnection.sendMessage(GetAddressMessage.empty());
       _sendAddressMessageCount++;
     }
   }
@@ -177,7 +188,7 @@ class HomeLogic {
       myAddress: PeerAddress.localhost(services: services, port: node.def.port),
       theirAddress: PeerAddress.localhost(services: services, port: node.def.port),
       nonce: ++_sendNonce,
-      subVer: VersionMessage.LIBRARY_SUBVER,
+      subVer: "/" + node.def.coinName + ":" + ".1-Crawler" + "/",
       lastHeight: 0,
       relayBeforeFilter: false,
       coinName: node.def.coinName,
