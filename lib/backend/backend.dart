@@ -68,7 +68,7 @@ class NodeService {
 
   Future<bool> checkNode(Node node) async {
     try {
-      final socket = await Socket.connect(node.address, node.port, timeout: Duration(milliseconds: 750));
+      final socket = await Socket.connect(node.address, node.port, timeout: Duration(milliseconds: 1500));
       await socket.close();
       return Future<bool>.value(true);
     } catch (e) {
@@ -101,7 +101,7 @@ class NodeConnection {
     _socket = await Socket.connect(
       _node.address,
       _node.port,
-      timeout: const Duration(milliseconds: 750),
+      timeout: const Duration(milliseconds: 1500),
     );
     _socket.setOption(SocketOption.tcpNoDelay, true);
     _socket.listen(_dataHandler, onError: _errorHandler, onDone: _doneHandler);

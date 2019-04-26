@@ -12,6 +12,12 @@ class _HomeScreenState extends State<HomeScreen> {
   final _logic = HomeLogic();
 
   @override
+  void dispose() {
+    _logic.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<bool>(
       valueListenable: _logic.loadingDNS,
@@ -54,7 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     animation: _logic.messages,
                     builder: (BuildContext context, Widget child) {
                       return ListView.builder(
-                        controller: _logic.messages.messagesScrollController,
+                        controller: _logic.messagesScrollController,
                         itemCount: _logic.messages.length,
                         itemBuilder: (BuildContext context, int index) {
                           return ListTile(
@@ -81,7 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return _HomeListHeader(
                         text: 'Nodes (${_logic.nodesCount}) '
                             'Open(${_logic.openScanner.openCount.value}) '
-                            'Recent (0)\nCrawling (${_logic.nodeProcessor.crawlIndex})\n'
+                            'Recent (${_logic.recentCount})\nCrawling (${_logic.nodeProcessor.crawlIndex})\n'
                             'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value} - ${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
                       );
                     }
@@ -92,7 +98,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   animation: _logic.nodes,
                   builder: (BuildContext context, Widget child) {
                     return ListView.builder(
-                      controller: _logic.nodes.nodesScrollController,
+                      controller: _logic.nodesScrollController,
                       itemCount: _logic.nodes.length,
                       itemBuilder: (BuildContext context, int index) {
                         final node = _logic.nodes[index];

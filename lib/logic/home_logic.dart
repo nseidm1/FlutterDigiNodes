@@ -10,6 +10,7 @@ import 'package:diginodes/coin_definitions.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:diginodes/domain/message_list.dart';
 import 'package:diginodes/logic/node_processor.dart';
+import 'package:diginodes/ui/scroll_to_bottom_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diginodes/logic/open_scanner.dart';
 import 'package:flutter/widgets.dart';
@@ -19,12 +20,18 @@ class HomeLogic {
   final _coinDefinition = ValueNotifier<Definition>(null);
   final _loadingDNS = ValueNotifier<bool>(false);
   final _nodes = NodeSet();
-  final _messages = MessageList(List());
+  final _messages = MessageList();
   final _openNodes = NodeSet();
+  int _recentCount = 0;
 
   OpenScanner _openScanner;
   NodeProcessor _nodeProcessor;
 
+  ScrollToBottomController _messagesScrollController;
+  ScrollController get messagesScrollController => _messagesScrollController;
+
+  ScrollToBottomController _nodesScrollController;
+  ScrollController get nodesScrollController => _nodesScrollController;
 
   ValueListenable<bool> get loadingDNS => _loadingDNS;
   ValueListenable<Definition> get coinDefinition => _coinDefinition;
@@ -33,8 +40,11 @@ class HomeLogic {
   int get nodesCount => _nodes.length;
   OpenScanner get openScanner => _openScanner;
   NodeProcessor get nodeProcessor => _nodeProcessor;
+  int get recentCount => _recentCount;
 
   HomeLogic() {
+    _messagesScrollController = ScrollToBottomController(listenable: _messages);
+    _nodesScrollController = ScrollToBottomController(listenable: _nodes);
     _openScanner = OpenScanner(
       nodes: _nodes,
       added: _openNodeAdded,
@@ -47,6 +57,11 @@ class HomeLogic {
     );
     _coinDefinition.addListener(_onCoinDefinitionChanged);
     _coinDefinition.value = coinDefinitions[0];
+  }
+
+  void dispose() {
+    _messagesScrollController.dispose();
+    _nodesScrollController.dispose();
   }
 
   Future<void> _onCoinDefinitionChanged() async {
@@ -80,13 +95,18 @@ class HomeLogic {
   void _processAddresses(AddressMessage message) async {
     message.addresses.forEach((peer) => print(HEX.encode(peer.address)));
     var nodes = List<Node>();
+    DateTime recentTime = DateTime.now().toUtc().subtract(Duration(seconds: 28800));
     for (PeerAddress peerAddress in message.addresses) {
       try {
         InternetAddress internetAddress = getInternetAddress(peerAddress.address);
         print('Internet Address: $internetAddress');
+        bool recent = DateTime.fromMillisecondsSinceEpoch(peerAddress.time * 1000, isUtc: true).isAfter(recentTime);
+        if (recent) {
+          _recentCount++;
+        }
         nodes.add(Node(internetAddress, peerAddress.port, _coinDefinition.value));
       } catch(e){
-
+        print('$e');
       }
     }
     int previousNodeCount = _nodes.length;

@@ -6,11 +6,6 @@ import 'package:flutter/widgets.dart';
 class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   NodeSet() : super({});
 
-  ScrollController _nodesScrollController = ScrollController();
-
-  ScrollController get nodesScrollController => _nodesScrollController;
-
-
   NodeSet.fromIterable(Iterable<Node> iterable)
       : super(Set<Node>.from(iterable));
 
@@ -21,7 +16,6 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   bool add(Node value) {
     final result = super.add(value);
     notifyListeners();
-    scrollToBottom();
     return result;
   }
 
@@ -29,15 +23,6 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   void addAll(Iterable<Node> elements) {
     super.addAll(elements);
     notifyListeners();
-    scrollToBottom();
-  }
-
-  void scrollToBottom() {
-    int totalPosition = _nodesScrollController.positions.length;
-    if (totalPosition > 0 && _nodesScrollController.positions.elementAt(totalPosition - 1).maxScrollExtent != null) {
-      _nodesScrollController.animateTo(_nodesScrollController.position.maxScrollExtent,
-          curve: Curves.easeOutBack, duration: Duration (milliseconds: 500));
-    }
   }
 
   @override
