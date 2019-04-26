@@ -1,27 +1,29 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
+import 'package:collection/collection.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
 import 'package:diginodes/domain/message_list.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:flutter/foundation.dart';
+import 'package:hex/hex.dart';
 import 'package:meta/meta.dart';
-
-typedef ProcessAddresses = void Function(AddressMessage message);
 
 class NodeProcessor {
   NodeProcessor({
     @required NodeSet nodes,
     @required MessageList messages,
-    @required ProcessAddresses processAddresses,
     @required ValueNotifier<Definition> coinDefinition,
-  }): _nodes = nodes, _messages = messages, _processAddresses = processAddresses, _coinDefinition = coinDefinition;
+  })  : _nodes = nodes,
+        _messages = messages,
+        _coinDefinition = coinDefinition;
 
   NodeSet _nodes;
   MessageList _messages;
-  ProcessAddresses _processAddresses;
   ValueNotifier<Definition> _coinDefinition;
 
   Timer _addrTimer;
@@ -30,16 +32,24 @@ class NodeProcessor {
   var _sendAddressMessageCount = 0;
   var _crawlIndex = 0;
   bool _shutdownFlag = false;
+  int _recentsCount = 0;
+  int _addressBatchesReceived = 0;
 
   int get crawlIndex => _crawlIndex;
+  int get recentsCount => _recentsCount;
   Completer _completer;
 
+  List<Node> _getOpenNodesList() {
+    return List.from(_nodes.where((node) => node.open));
+  }
+
   Node _getNextOpenNode() {
-    if (_nodes.length == 0) {
+    List<Node> openNodes = _getOpenNodesList();
+    if (openNodes.length == 0) {
       return null;
     }
-    _crawlIndex = (++_crawlIndex % _nodes.length);
-    return _nodes[_crawlIndex];
+    _crawlIndex = (++_crawlIndex % openNodes.length);
+    return openNodes[_crawlIndex];
   }
 
   Future<void> crawlOpenNodes() async {
@@ -50,20 +60,17 @@ class NodeProcessor {
         node: nextOpenNode,
       );
       _completer = Completer<bool>();
-      Timer timeout;
-      try{
+      try {
         _nodeConnection.incomingMessages.listen((Message message) {
           if (message is PingMessage) {
             if (message.hasNonce) {
               _nodeConnection.sendMessage(PongMessage(_sendNonce));
             }
           } else if (message is VerackMessage) {
-            timeout.cancel();
-            _addrTimer = Timer.periodic(Duration(milliseconds: 3000), (t) =>
-                _sendAddressMessage());
-          } else if(message is VersionMessage) {
+            _addrTimer = Timer.periodic(Duration(milliseconds: 3000), (t) => _sendAddressMessage());
+          } else if (message is VersionMessage) {
             _nodeConnection.sendMessage(VerackMessage());
-          } else if(message is AddressMessage) {
+          } else if (message is AddressMessage) {
             _processAddresses(message);
           }
         }, onError: (e) {
@@ -73,20 +80,50 @@ class NodeProcessor {
         print('connected $nextOpenNode');
         _messages.add("New node connected: $_crawlIndex");
         await _nodeConnection.sendMessage(_getMyVersionMessage(nextOpenNode));
-        timeout = Timer(Duration(milliseconds: 15000), () => _completer.complete(true));
         await _completer.future;
         print('next node');
-      }
-      catch (e) {
+      } catch (e) {
         print('$e');
-      }
-      finally{
+      } finally {
         close();
       }
+    } else {
+      await Future.delayed(const Duration(milliseconds: 250));
     }
     if (!_shutdownFlag) {
-      await Future.delayed(const Duration(milliseconds: 2500));
       crawlOpenNodes();
+    }
+  }
+
+  void _processAddresses(AddressMessage message) {
+    _addressBatchesReceived++;
+    if (_addressBatchesReceived == 2) {
+      _addressBatchesReceived = 0;
+      close();
+    }
+    message.addresses.forEach((peer) => print(HEX.encode(peer.address)));
+    List<Node> nodes = List();
+    for (PeerAddress peerAddress in message.addresses) {
+      nodes.add(
+          Node(getInternetAddress(peerAddress.address), peerAddress.port, peerAddress.time, _coinDefinition.value));
+    }
+    DateTime recentTime = DateTime.now().toUtc().subtract(Duration(seconds: 28800));
+    nodes.removeWhere((node) => _nodes.contains(node));
+    for (Node node in nodes) {
+      if (DateTime.fromMillisecondsSinceEpoch(node.time * 1000, isUtc: true).isAfter(recentTime)) {
+        _recentsCount++;
+      }
+    }
+    _nodes.addAll(nodes);
+  }
+
+  InternetAddress getInternetAddress(List<int> address) {
+    const equality = ListEquality<int>();
+    if (equality.equals(address.sublist(0, 12), const <int>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF])) {
+      return InternetAddress(address.sublist(12).map((el) => el.toRadixString(10)).join('.'));
+    } else {
+      final view = Uint8List.fromList(address).buffer.asUint16List();
+      return InternetAddress(view.map((el) => el.toRadixString(16)).join(':'));
     }
   }
 
@@ -94,7 +131,7 @@ class NodeProcessor {
     if (_sendAddressMessageCount > 10) {
       close();
     } else {
-      _messages.add("Sending getAddr Message");
+      _messages.add("Sending getAddr Message: $_sendAddressMessageCount");
       _nodeConnection.sendMessage(PingMessage.empty());
       _nodeConnection.sendMessage(GetAddressMessage.empty());
       _sendAddressMessageCount++;
@@ -122,16 +159,15 @@ class NodeProcessor {
   void close() {
     _nodeConnection?.close();
     _addrTimer?.cancel();
-    if (!_completer.isCompleted) {
+    if (_completer != null && !_completer.isCompleted) {
       _completer.complete(true);
     }
     _sendAddressMessageCount = 0;
   }
 
   void reset() {
-    _sendAddressMessageCount = 0;
     _crawlIndex = 0;
-    _addrTimer?.cancel();
+    close();
   }
 
   void shutdown() {

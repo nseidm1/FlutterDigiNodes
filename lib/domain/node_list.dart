@@ -6,8 +6,7 @@ import 'package:flutter/widgets.dart';
 class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   NodeSet() : super({});
 
-  NodeSet.fromIterable(Iterable<Node> iterable)
-      : super(Set<Node>.from(iterable));
+  NodeSet.fromIterable(Iterable<Node> iterable) : super(Set<Node>.from(iterable));
 
   @override
   Node operator [](int index) => elementAt(index);
@@ -35,12 +34,6 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   @override
   void removeAll(Iterable<Object> elements) {
     super.removeAll(elements);
-    notifyListeners();
-  }
-
-  @override
-  void clear() {
-    super.clear();
     notifyListeners();
   }
 }

@@ -1,11 +1,9 @@
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/domain/node_list.dart';
-import 'package:diginodes/logic/home_logic.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
-
 
 typedef OpenNodeAdded = void Function(Node bode);
 
@@ -13,7 +11,8 @@ class OpenScanner {
   OpenScanner({
     @required NodeSet nodes,
     OpenNodeAdded added,
-  }) : _nodes = nodes, _added = added;
+  })  : _nodes = nodes,
+        _added = added;
 
   final NodeSet _nodes;
   final OpenNodeAdded _added;
@@ -26,7 +25,6 @@ class OpenScanner {
     ValueNotifier<int>(0),
     ValueNotifier<int>(0)
   ];
-
 
   ValueListenable<int> get one => _indexes[0];
   ValueListenable<int> get two => _indexes[1];
@@ -42,6 +40,10 @@ class OpenScanner {
   ValueListenable<int> get openCount => _openCount;
 
   int get _nodeCount => _nodes.length;
+
+  void setDnsOpen(int count) {
+    _openCount.value = count;
+  }
 
   int _currentMaxIndex() {
     final currentMaxIndex = _indexes.fold<int>(0, (prev, el) => math.max(prev, el.value));
@@ -81,7 +83,7 @@ class OpenScanner {
         bool open = await NodeService.instance.checkNode(nextNode);
         nextNode.open = open;
         if (open) {
-          _added?.call(nextNode);
+          _added(nextNode);
           _openCount.value++;
         }
       }

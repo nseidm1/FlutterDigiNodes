@@ -4,21 +4,21 @@ import 'dart:typed_data';
 
 import 'package:bitcoin/wire.dart';
 import 'package:diginodes/coin_definitions.dart';
-import 'package:hex/hex.dart';
 import 'package:meta/meta.dart';
-import "package:bytes/bytes.dart" as bytes;
-
 
 final _dnsCache = Map<String, List<InternetAddress>>();
 
 class Node {
-  Node(this.address, this.port, this.def);
+  Node(this.address, this.port, this.time, this.def, {bool open = false}) : _open = open;
 
   final InternetAddress address;
   final int port;
   final Definition def;
+  final int time;
+  final bool _open;
 
-  bool open = false;
+  bool get open => _open;
+  void set open(bool) => _open;
 
   @override
   String toString() {
@@ -27,10 +27,7 @@ class Node {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) ||
-          other is Node &&
-              runtimeType == other.runtimeType &&
-              address == other.address;
+      identical(this, other) || other is Node && runtimeType == other.runtimeType && address == other.address;
 
   @override
   int get hashCode => address.hashCode;
@@ -63,7 +60,7 @@ class NodeService {
     ));
     final addresses = results.where((el) => el != null).reduce((a, b) => a + b).toList();
     print('onDnsDiscovery: ${definition.coinName}: addresses $addresses');
-    return addresses.map((address) => Node(address, definition.port, definition)).toList();
+    return addresses.map((address) => Node(address, definition.port, 0, definition, open: true)).toList();
   }
 
   Future<bool> checkNode(Node node) async {
@@ -83,7 +80,8 @@ class NodeConnection {
   NodeConnection({
     @required Close close,
     @required Node node,
-  }): _homeLogicClose = close, _node = node;
+  })  : _homeLogicClose = close,
+        _node = node;
 
   final Node _node;
   final Close _homeLogicClose;
@@ -114,14 +112,14 @@ class NodeConnection {
       //print('message bytes: ${HEX.encode(bytes)}');
       _socket.add(bytes);
       print('Message sent $message');
-    } catch(e) {
+    } catch (e) {
       _homeLogicClose();
     }
   }
 
   ///This is not called directly from this class,
   ///instead _homeLogicClose() is called in HomeLogic, which calls here.
-  Future<void> close() async {
+  close() {
     _connected = false;
     _socket?.destroy();
   }
@@ -134,7 +132,7 @@ class NodeConnection {
   void attemptToFindMessage() {
     try {
       attemptToDeserializeMessage();
-    } catch(e) {
+    } catch (e) {
       if (e is ArgumentError) {
         pruneUnsupportedMessage();
         attemptToFindMessage();
@@ -166,8 +164,8 @@ class NodeConnection {
     final packetMagic = _node.def.packetMagic;
     final allBytes = Uint8List.fromList(bytes).buffer.asByteData();
     var magicOccurrence = 0;
-    for(int i = 0; i < allBytes.lengthInBytes - 4; i++){
-      if(allBytes.getUint32(i, Endian.big) == packetMagic){
+    for (int i = 0; i < allBytes.lengthInBytes - 4; i++) {
+      if (allBytes.getUint32(i, Endian.big) == packetMagic) {
         if (magicOccurrence == 1) {
           return i;
         } else {

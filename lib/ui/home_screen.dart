@@ -8,7 +8,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-
   final _logic = HomeLogic();
 
   @override
@@ -48,28 +47,27 @@ class _HomeScreenState extends State<HomeScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               AnimatedBuilder(
-                animation: _logic.messages,
-                builder: (BuildContext context, Widget child) {
-                  return _HomeListHeader(
-                    text: "Messages (${_logic.messages.length})",
-                  );
-                }
-              ),
+                  animation: _logic.messages,
+                  builder: (BuildContext context, Widget child) {
+                    return _HomeListHeader(
+                      text: "Messages (${_logic.messages.length})",
+                    );
+                  }),
               Expanded(
-                  child: AnimatedBuilder(
-                    animation: _logic.messages,
-                    builder: (BuildContext context, Widget child) {
-                      return ListView.builder(
-                        controller: _logic.messagesScrollController,
-                        itemCount: _logic.messages.length,
-                        itemBuilder: (BuildContext context, int index) {
-                          return ListTile(
-                            title: Center(child: Text(_logic.messages.elementAt(index))),
-                          );
-                        },
-                      );
-                    },
-                  ),
+                child: AnimatedBuilder(
+                  animation: _logic.messages,
+                  builder: (BuildContext context, Widget child) {
+                    return ListView.builder(
+                      controller: _logic.messagesScrollController,
+                      itemCount: _logic.messages.length,
+                      itemBuilder: (BuildContext context, int index) {
+                        return ListTile(
+                          title: Center(child: Text(_logic.messages.elementAt(index))),
+                        );
+                      },
+                    );
+                  },
+                ),
               ),
               Container(
                 child: AnimatedBuilder(
@@ -87,11 +85,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       return _HomeListHeader(
                         text: 'Nodes (${_logic.nodesCount}) '
                             'Open(${_logic.openScanner.openCount.value}) '
-                            'Recent (${_logic.recentCount})\nCrawling (${_logic.nodeProcessor.crawlIndex})\n'
+                            'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling (${_logic.nodeProcessor.crawlIndex})\n'
                             'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value} - ${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
                       );
-                    }
-                ),
+                    }),
               ),
               Expanded(
                 child: AnimatedBuilder(
@@ -173,13 +170,13 @@ class _HomeListHeader extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-      color: Colors.grey.shade400,
+      color: const Color(0xFF00574B),
       child: Text(
         text,
         textAlign: TextAlign.center,
         style: theme.textTheme.subhead.copyWith(
           fontWeight: FontWeight.bold,
-          color: Colors.grey.shade700,
+          color: Colors.white,
         ),
       ),
     );

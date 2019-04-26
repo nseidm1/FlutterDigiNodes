@@ -4,9 +4,11 @@ class ScrollToBottomController extends ScrollController {
   ScrollToBottomController({
     @required Listenable listenable,
     double initialScrollOffset = 0.0,
-    bool keepScrollOffset = true,
+    bool keepScrollOffset = false,
     String debugLabel,
+    int duration,
   })  : _listenable = listenable,
+        _duration = duration,
         super(
           initialScrollOffset: initialScrollOffset,
           keepScrollOffset: keepScrollOffset,
@@ -15,6 +17,7 @@ class ScrollToBottomController extends ScrollController {
 
   final Listenable _listenable;
   bool _attached = false;
+  int _duration;
 
   @override
   void attach(ScrollPosition position) {
@@ -42,12 +45,17 @@ class ScrollToBottomController extends ScrollController {
 
   void _onListenerChanged() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (position.maxScrollExtent != null && position.extentAfter < 64.0) {
-        animateTo(
-          position.maxScrollExtent,
-          curve: Curves.easeOutBack,
-          duration: Duration(milliseconds: 500),
-        );
+      try {
+        if (position != null && position.maxScrollExtent != null) {
+          print('ScrollController - scrolling to bottom');
+          animateTo(
+            position.maxScrollExtent,
+            curve: Curves.easeInOut,
+            duration: Duration(milliseconds: _duration),
+          );
+        }
+      } catch (e) {
+        print('$e');
       }
     });
   }
