@@ -28,7 +28,8 @@ class NodeProcessor {
   MessageAdded _messageAdded;
   ValueNotifier<Definition> _coinDefinition;
 
-  static const SEND_ADDRESS_LIMIT = 10;
+  // 10 sendAddr starting from 1
+  static const SEND_ADDRESS_LIMIT = 11;
   static const SEND_ADDRESS_PERIOD_MILLIS = 3000;
   static const NO_NODES_DELAY = 1000;
 
@@ -40,7 +41,7 @@ class NodeProcessor {
   int _recentsCount = 0;
 
   AddNewNodes _addNewNodes;
-  var _sendAddressMessageCount = 0;
+  var _sendAddressMessageCount = 1;
   int get crawlIndex => _crawlIndex;
   int _addressBatchesReceived = 0;
 
@@ -130,7 +131,10 @@ class NodeProcessor {
       }
     }
     if (nodes.length > 0) {
+      _messageAdded("Found ${nodes.length} new nodes");
       _addNewNodes(nodes);
+    } else {
+      _messageAdded("No new nodes found");
     }
   }
 
@@ -153,7 +157,7 @@ class NodeProcessor {
     if (_completer != null && !_completer.isCompleted) {
       _completer.complete(true);
     }
-    _sendAddressMessageCount = 0;
+    _sendAddressMessageCount = 1;
   }
 
   void processCoinChange() {

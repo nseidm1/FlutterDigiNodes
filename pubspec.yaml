@@ -11,6 +11,7 @@ dependencies:
   cryptoutils: any
   hex: ^0.1.2
   esys_flutter_share: ^1.0.1
+  archive: ^2.0.8
   bitcoin:
     git: https://github.com/nseidm1/dart-bitcoin.git
   flutter:

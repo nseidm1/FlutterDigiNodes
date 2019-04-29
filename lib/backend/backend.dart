@@ -30,6 +30,13 @@ class Node {
 
   @override
   int get hashCode => address.hashCode;
+
+  Map<String, dynamic> toJson() => {
+        'address': address.address,
+        'port': port,
+        'time': time,
+        'open': open,
+      };
 }
 
 class NodeService {
