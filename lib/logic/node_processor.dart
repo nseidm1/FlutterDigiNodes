@@ -160,7 +160,7 @@ class NodeProcessor {
     _sendAddressMessageCount = 1;
   }
 
-  void processCoinChange() {
+  void clear() {
     _crawlIndex = 0;
     close();
   }

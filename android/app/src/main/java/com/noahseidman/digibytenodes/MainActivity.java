@@ -1,4 +1,4 @@
-package com.example.flutter_digi_nodes;
+package com.noahseidman.digibytenodes;
 
 import android.os.Bundle;
 import io.flutter.app.FlutterActivity;

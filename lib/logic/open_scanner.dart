@@ -67,8 +67,9 @@ class OpenScanner {
     _shutdown = true;
   }
 
-  void reset() {
+  void clear() {
     _indexes.forEach((i) => i.value = 0);
+    _openCount.value = 0;
   }
 
   Future<void> _startScanner(int index) async {
@@ -77,8 +78,10 @@ class OpenScanner {
       Node nextNode = _nodes[_indexes[index].value];
       if (!nextNode.open) {
         if (await NodeService.instance.checkNode(nextNode)) {
-          nextNode.open = true;
-          _openCount.value++;
+          if (!nextNode.open) {
+            nextNode.open = true;
+            _openCount.value++;
+          }
         }
       }
     }

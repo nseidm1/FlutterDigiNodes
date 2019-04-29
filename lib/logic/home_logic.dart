@@ -21,7 +21,6 @@ class HomeLogic {
   final _loadingDNS = ValueNotifier<bool>(false);
   final _nodes = NodeSet();
   final _messages = MessageList();
-  final _openNodes = NodeSet();
 
   OpenScanner _openScanner;
   NodeProcessor _nodeProcessor;
@@ -66,17 +65,18 @@ class HomeLogic {
     _loadingDNS.value = true;
     _reset();
     _messageAdded("Resolving DNS");
-    _addNewNodes(await NodeService.instance.startDiscovery(_coinDefinition.value));
+    List<Node> nodes = await NodeService.instance.startDiscovery(_coinDefinition.value);
+    await Future.delayed(Duration(milliseconds: 1000));
+    _addNewNodes(nodes);
     _openScanner.start();
     _messageAdded("DNS complete");
     _loadingDNS.value = false;
   }
 
   void _reset() {
-    _nodeProcessor.processCoinChange();
+    _nodeProcessor.clear();
     _nodes.clear();
-    _openNodes.clear();
-    _openScanner.reset();
+    _openScanner.clear();
     _messages.clear();
   }
 
@@ -110,7 +110,6 @@ class HomeLogic {
     buffer.write(']');
 
     List<int> stringBytes = utf8.encode(buffer.toString());
-    final encoder = new GZipEncoder();
     List<int> gzipBytes = new GZipEncoder().encode(stringBytes);
     return file.writeAsBytes(gzipBytes);
   }
