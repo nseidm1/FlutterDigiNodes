@@ -121,7 +121,6 @@ class NodeProcessor {
       close();
     } else {
       _messageAdded("Sending getAddr Message: $_sendAddressMessageCount");
-      _nodeConnection.sendMessage(PingMessage.empty());
       _nodeConnection.sendMessage(GetAddressMessage.empty());
       _sendAddressMessageCount++;
     }
