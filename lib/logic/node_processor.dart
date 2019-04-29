@@ -36,16 +36,18 @@ class NodeProcessor {
   static const GENERAL_NODES_DELAY = 2500;
   static const HARD_TIMEOUT = 10000;
 
+  final _addNewNodes;
+
   Timer _addrTimer;
   Timer _hardTimeout;
   NodeConnection _nodeConnection;
-  AddNewNodes _addNewNodes;
   Completer _completer;
+
+  bool _shutdownFlag = false;
   int _sendNonce = 0;
   int _crawlIndex = 0;
   int _sendAddressMessageCount = 1;
   int _addressBatchesReceived = 0;
-  bool _shutdownFlag = false;
   int _recentsCount = 0;
 
   int get recentsCount => _recentsCount;

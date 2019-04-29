@@ -77,7 +77,7 @@ class NodeConnection {
     _socket = await Socket.connect(
       _node.address,
       _node.port,
-      timeout: const Duration(milliseconds: 1500),
+      timeout: const Duration(milliseconds: 2500),
     );
     _socket.setOption(SocketOption.tcpNoDelay, true);
     _socket.listen(_dataHandler, onError: _errorHandler, onDone: _doneHandler);
@@ -87,7 +87,6 @@ class NodeConnection {
   Future<void> sendMessage(Message message) async {
     try {
       var bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
-      //print('message bytes: ${HEX.encode(bytes)}');
       _socket.add(bytes);
       print('Message sent $message');
     } catch (e) {
