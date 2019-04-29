@@ -63,11 +63,7 @@ class NodeProcessor {
       return null;
     }
     _crawlIndex = crawlIndex % openNodes.length;
-    try {
-      return openNodes[_crawlIndex];
-    } finally {
-      _crawlIndex++;
-    }
+    return openNodes[_crawlIndex++];
   }
 
   Future<void> crawlOpenNodes() async {
