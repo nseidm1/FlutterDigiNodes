@@ -15,10 +15,10 @@ class Node {
   final int port;
   final Definition def;
   final int time;
-  final bool _open;
+  bool _open;
 
   bool get open => _open;
-  void set open(bool) => _open;
+  set open(open) => _open = open;
 
   @override
   String toString() {
@@ -26,8 +26,7 @@ class Node {
   }
 
   @override
-  bool operator ==(Object other) =>
-      identical(this, other) || other is Node && runtimeType == other.runtimeType && address == other.address;
+  bool operator ==(Object other) => other is Node && address == other.address;
 
   @override
   int get hashCode => address.hashCode;
@@ -36,7 +35,9 @@ class Node {
 class NodeService {
   static final instance = NodeService();
 
-  final pingTimeout = Duration(milliseconds: 750);
+  static const PING_TIMEOUT = 1000;
+
+  final pingTimeout = Duration(milliseconds: PING_TIMEOUT);
 
   Future<void> init() async {}
 
@@ -60,7 +61,7 @@ class NodeService {
     ));
     final addresses = results.where((el) => el != null).reduce((a, b) => a + b).toList();
     print('onDnsDiscovery: ${definition.coinName}: addresses $addresses');
-    return addresses.map((address) => Node(address, definition.port, 0, definition, open: true)).toList();
+    return addresses.map((address) => Node(address, definition.port, 0, definition, open: false)).toList();
   }
 
   Future<bool> checkNode(Node node) async {

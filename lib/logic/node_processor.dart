@@ -1,41 +1,49 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:typed_data';
-
-import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
-import 'package:collection/collection.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
-import 'package:diginodes/domain/message_list.dart';
 import 'package:diginodes/domain/node_list.dart';
+import 'package:diginodes/logic/crypto_utils.dart';
 import 'package:flutter/foundation.dart';
-import 'package:hex/hex.dart';
 import 'package:meta/meta.dart';
+
+import 'address_handler.dart';
+
+typedef AddNewNodes = void Function(List<Node> nodes);
+typedef MessageAdded = void Function(String message);
+typedef NodeComplete = void Function();
 
 class NodeProcessor {
   NodeProcessor({
     @required NodeSet nodes,
-    @required MessageList messages,
+    @required MessageAdded messageAdded,
     @required ValueNotifier<Definition> coinDefinition,
+    @required AddNewNodes addNewNodes,
   })  : _nodes = nodes,
-        _messages = messages,
-        _coinDefinition = coinDefinition;
+        _messageAdded = messageAdded,
+        _coinDefinition = coinDefinition,
+        _addNewNodes = addNewNodes;
 
   NodeSet _nodes;
-  MessageList _messages;
+  MessageAdded _messageAdded;
   ValueNotifier<Definition> _coinDefinition;
+
+  static const SEND_ADDRESS_LIMIT = 10;
+  static const SEND_ADDRESS_PERIOD_MILLIS = 3000;
+  static const NO_NODES_DELAY = 1000;
 
   Timer _addrTimer;
   NodeConnection _nodeConnection;
   var _sendNonce = 0;
-  var _sendAddressMessageCount = 0;
   var _crawlIndex = 0;
   bool _shutdownFlag = false;
   int _recentsCount = 0;
+
+  AddNewNodes _addNewNodes;
+  var _sendAddressMessageCount = 0;
+  int get crawlIndex => _crawlIndex;
   int _addressBatchesReceived = 0;
 
-  int get crawlIndex => _crawlIndex;
   int get recentsCount => _recentsCount;
   Completer _completer;
 
@@ -48,8 +56,12 @@ class NodeProcessor {
     if (openNodes.length == 0) {
       return null;
     }
-    _crawlIndex = (++_crawlIndex % openNodes.length);
-    return openNodes[_crawlIndex];
+    _crawlIndex = crawlIndex % openNodes.length;
+    try {
+      return openNodes[_crawlIndex];
+    } finally {
+      _crawlIndex++;
+    }
   }
 
   Future<void> crawlOpenNodes() async {
@@ -61,99 +73,78 @@ class NodeProcessor {
       );
       _completer = Completer<bool>();
       try {
-        _nodeConnection.incomingMessages.listen((Message message) {
-          if (message is PingMessage) {
-            if (message.hasNonce) {
-              _nodeConnection.sendMessage(PongMessage(_sendNonce));
-            }
-          } else if (message is VerackMessage) {
-            _addrTimer = Timer.periodic(Duration(milliseconds: 3000), (t) => _sendAddressMessage());
-          } else if (message is VersionMessage) {
-            _nodeConnection.sendMessage(VerackMessage());
-          } else if (message is AddressMessage) {
-            _processAddresses(message);
-          }
-        }, onError: (e) {
-          _completer.completeError(e);
-        });
+        _nodeConnection.incomingMessages
+            .listen((Message message) => incomingMessageHandler(message), onError: (e) => _completer.completeError(e));
         await _nodeConnection.connect(_coinDefinition.value);
-        print('connected $nextOpenNode');
-        _messages.add("New node connected: $_crawlIndex");
-        await _nodeConnection.sendMessage(_getMyVersionMessage(nextOpenNode));
+        _messageAdded("New node connected: $_crawlIndex");
+        await _nodeConnection.sendMessage(CryptoUtils.getVersionMessage(nextOpenNode));
         await _completer.future;
-        print('next node');
       } catch (e) {
         print('$e');
       } finally {
         close();
       }
     } else {
-      await Future.delayed(const Duration(milliseconds: 250));
+      await Future.delayed(const Duration(milliseconds: NO_NODES_DELAY));
     }
     if (!_shutdownFlag) {
       crawlOpenNodes();
     }
   }
 
-  void _processAddresses(AddressMessage message) {
-    _addressBatchesReceived++;
-    if (_addressBatchesReceived == 2) {
-      _addressBatchesReceived = 0;
-      close();
-    }
-    message.addresses.forEach((peer) => print(HEX.encode(peer.address)));
-    List<Node> nodes = List();
-    for (PeerAddress peerAddress in message.addresses) {
-      nodes.add(
-          Node(getInternetAddress(peerAddress.address), peerAddress.port, peerAddress.time, _coinDefinition.value));
-    }
-    DateTime recentTime = DateTime.now().toUtc().subtract(Duration(seconds: 28800));
-    nodes.removeWhere((node) => _nodes.contains(node));
-    for (Node node in nodes) {
-      if (DateTime.fromMillisecondsSinceEpoch(node.time * 1000, isUtc: true).isAfter(recentTime)) {
-        _recentsCount++;
+  void incomingMessageHandler(Message message) {
+    if (message is PingMessage) {
+      if (message.hasNonce) {
+        _nodeConnection.sendMessage(PongMessage(_sendNonce));
       }
+    } else if (message is VerackMessage) {
+      _addrTimer = Timer.periodic(Duration(milliseconds: SEND_ADDRESS_PERIOD_MILLIS), (t) => sendAddressMessage());
+    } else if (message is VersionMessage) {
+      _nodeConnection.sendMessage(VerackMessage());
+    } else if (message is AddressMessage) {
+      AddressHandler.processAddresses(
+          existingNodeSet: _nodes,
+          incomingMessage: message,
+          coinDefinition: _coinDefinition.value,
+          processStart: () => processAddressBatchCounter(),
+          processComplete: (nodes) => newAddresses(nodes));
     }
-    _nodes.addAll(nodes);
   }
 
-  InternetAddress getInternetAddress(List<int> address) {
-    const equality = ListEquality<int>();
-    if (equality.equals(address.sublist(0, 12), const <int>[0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0xFF, 0xFF])) {
-      return InternetAddress(address.sublist(12).map((el) => el.toRadixString(10)).join('.'));
-    } else {
-      final view = Uint8List.fromList(address).buffer.asUint16List();
-      return InternetAddress(view.map((el) => el.toRadixString(16)).join(':'));
-    }
-  }
-
-  void _sendAddressMessage() {
-    if (_sendAddressMessageCount > 10) {
+  void sendAddressMessage() {
+    if (_sendAddressMessageCount > SEND_ADDRESS_LIMIT) {
       close();
     } else {
-      _messages.add("Sending getAddr Message: $_sendAddressMessageCount");
+      _messageAdded("Sending getAddr Message: $_sendAddressMessageCount");
       _nodeConnection.sendMessage(PingMessage.empty());
       _nodeConnection.sendMessage(GetAddressMessage.empty());
       _sendAddressMessageCount++;
     }
   }
 
-  Message _getMyVersionMessage(Node node) {
-    final services = BigInteger.ZERO;
-    final time = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
-    VersionMessage ver = new VersionMessage(
-      clientVersion: node.def.protocolVersion,
-      services: services,
-      time: time,
-      myAddress: PeerAddress.localhost(services: services, port: node.def.port),
-      theirAddress: PeerAddress.localhost(services: services, port: node.def.port),
-      nonce: ++_sendNonce,
-      subVer: "/" + node.def.coinName + ":" + ".1-Crawler" + "/",
-      lastHeight: 0,
-      relayBeforeFilter: false,
-      coinName: node.def.coinName,
-    );
-    return ver;
+  void newAddresses(List<Node> nodes) {
+    DateTime recentTime = DateTime.now().toUtc().subtract(Duration(seconds: 28800));
+    for (Node node in nodes) {
+      if (DateTime.fromMillisecondsSinceEpoch(node.time * 1000, isUtc: true).isAfter(recentTime)) {
+        _recentsCount++;
+      }
+    }
+    if (nodes.length > 0) {
+      _addNewNodes(nodes);
+    }
+  }
+
+  ///
+  /// Return true of we've processed the second address batch from any given node
+  ///
+  bool processAddressBatchCounter() {
+    _addressBatchesReceived++;
+    if (_addressBatchesReceived == 2) {
+      _addressBatchesReceived = 0;
+      close();
+      return true;
+    }
+    return false;
   }
 
   void close() {
@@ -165,7 +156,7 @@ class NodeProcessor {
     _sendAddressMessageCount = 0;
   }
 
-  void reset() {
+  void processCoinChange() {
     _crawlIndex = 0;
     close();
   }

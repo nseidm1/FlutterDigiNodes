@@ -8,7 +8,6 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
 
   NodeSet.fromIterable(Iterable<Node> iterable) : super(Set<Node>.from(iterable));
 
-  @override
   Node operator [](int index) => elementAt(index);
 
   @override

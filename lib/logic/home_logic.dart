@@ -9,7 +9,6 @@ import 'package:diginodes/ui/scroll_to_bottom_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diginodes/logic/open_scanner.dart';
 import 'package:flutter/widgets.dart';
-import 'package:hex/hex.dart';
 
 class HomeLogic {
   final _coinDefinition = ValueNotifier<Definition>(null);
@@ -36,17 +35,18 @@ class HomeLogic {
   NodeProcessor get nodeProcessor => _nodeProcessor;
 
   HomeLogic() {
-    _messagesScrollController = ScrollToBottomController(listenable: _messages, duration: 500);
-    _nodesScrollController = ScrollToBottomController(listenable: _nodes, duration: 10000);
+    _messagesScrollController = ScrollToBottomController(duration: 500);
+    _nodesScrollController = ScrollToBottomController(duration: 4000);
     _openScanner = OpenScanner(
       nodes: _nodes,
-      added: _openNodeAdded,
     );
     _nodeProcessor = NodeProcessor(
       nodes: _nodes,
-      messages: _messages,
+      messageAdded: _messageAdded,
       coinDefinition: _coinDefinition,
+      addNewNodes: _addNewNodes,
     );
+    _nodeProcessor.crawlOpenNodes();
     _coinDefinition.addListener(_onCoinDefinitionChanged);
     _coinDefinition.value = coinDefinitions[0];
   }
@@ -59,17 +59,15 @@ class HomeLogic {
   Future<void> _onCoinDefinitionChanged() async {
     _loadingDNS.value = true;
     _reset();
-    _messages.add("Resolving DNS");
-    _nodes.addAll(await NodeService.instance.startDiscovery(_coinDefinition.value));
-    _openScanner.setDnsOpen(_nodes.length);
+    _messageAdded("Resolving DNS");
+    _addNewNodes(await NodeService.instance.startDiscovery(_coinDefinition.value));
     _openScanner.start();
-    _messages.add("DNS complete");
-    _nodeProcessor.crawlOpenNodes();
+    _messageAdded("DNS complete");
     _loadingDNS.value = false;
   }
 
   void _reset() {
-    _nodeProcessor.reset();
+    _nodeProcessor.processCoinChange();
     _nodes.clear();
     _openNodes.clear();
     _openScanner.reset();
@@ -81,8 +79,14 @@ class HomeLogic {
     _openScanner.shutdown();
   }
 
-  void _openNodeAdded(Node node) {
-    _openNodes.add(node);
+  void _addNewNodes(List<Node> nodes) {
+    _nodes.addAll(nodes);
+    _nodesScrollController.scrollToBottom();
+  }
+
+  void _messageAdded(String message) {
+    _messages.add(message);
+    _messagesScrollController.scrollToBottom();
   }
 
   void onShareButtonPressed() {

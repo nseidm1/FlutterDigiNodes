@@ -5,17 +5,12 @@ import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 
-typedef OpenNodeAdded = void Function(Node bode);
-
 class OpenScanner {
   OpenScanner({
     @required NodeSet nodes,
-    OpenNodeAdded added,
-  })  : _nodes = nodes,
-        _added = added;
+  }) : _nodes = nodes;
 
   final NodeSet _nodes;
-  final OpenNodeAdded _added;
 
   final _indexes = [
     ValueNotifier<int>(0),
@@ -33,6 +28,11 @@ class OpenScanner {
   ValueListenable<int> get five => _indexes[4];
   ValueListenable<int> get six => _indexes[5];
 
+  static const LONGEST_DELAY = 2500;
+  static const LONG_DELAY = 1500;
+  static const MEDIUM_DELAY = 1000;
+  static const SHORT_DELAY = 750;
+
   bool _shutdown = false;
   bool _running = false;
 
@@ -40,10 +40,6 @@ class OpenScanner {
   ValueListenable<int> get openCount => _openCount;
 
   int get _nodeCount => _nodes.length;
-
-  void setDnsOpen(int count) {
-    _openCount.value = count;
-  }
 
   int _currentMaxIndex() {
     final currentMaxIndex = _indexes.fold<int>(0, (prev, el) => math.max(prev, el.value));
@@ -80,10 +76,8 @@ class OpenScanner {
       _indexes[index].value = _currentMaxIndex() + 1;
       Node nextNode = _nodes[_indexes[index].value];
       if (!nextNode.open) {
-        bool open = await NodeService.instance.checkNode(nextNode);
-        nextNode.open = open;
-        if (open) {
-          _added(nextNode);
+        if (await NodeService.instance.checkNode(nextNode)) {
+          nextNode.open = true;
           _openCount.value++;
         }
       }
@@ -91,13 +85,13 @@ class OpenScanner {
     if (!_shutdown) {
       int milliseconds;
       if (_nodeCount < 100) {
-        milliseconds = 2500;
+        milliseconds = LONGEST_DELAY;
       } else if (_nodeCount < 1000) {
-        milliseconds = 1500;
+        milliseconds = LONG_DELAY;
       } else if (_nodeCount < 5000) {
-        milliseconds = 1000;
+        milliseconds = MEDIUM_DELAY;
       } else {
-        milliseconds = 750;
+        milliseconds = SHORT_DELAY;
       }
       await Future.delayed(Duration(milliseconds: milliseconds));
       _startScanner(index);

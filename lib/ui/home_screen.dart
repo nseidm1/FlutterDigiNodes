@@ -1,3 +1,4 @@
+import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
 import 'package:diginodes/logic/home_logic.dart';
 import 'package:flutter/material.dart';
@@ -61,8 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       controller: _logic.messagesScrollController,
                       itemCount: _logic.messages.length,
                       itemBuilder: (BuildContext context, int index) {
+                        final message = _logic.messages[index];
                         return ListTile(
-                          title: Center(child: Text(_logic.messages.elementAt(index))),
+                          key: ValueKey<String>(message),
+                          title: Center(child: Text(message)),
                         );
                       },
                     );
@@ -85,7 +88,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       return _HomeListHeader(
                         text: 'Nodes (${_logic.nodesCount}) '
                             'Open(${_logic.openScanner.openCount.value}) '
-                            'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling (${_logic.nodeProcessor.crawlIndex})\n'
+                            'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
                             'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value} - ${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
                       );
                     }),
@@ -100,6 +103,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       itemBuilder: (BuildContext context, int index) {
                         final node = _logic.nodes[index];
                         return ListTile(
+                          key: ValueKey<Node>(node),
                           title: Center(child: Text('${node.address.address}')),
                         );
                       },
