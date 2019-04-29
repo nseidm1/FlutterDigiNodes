@@ -32,8 +32,10 @@ class NodeProcessor {
   static const SEND_ADDRESS_LIMIT = 11;
   static const SEND_ADDRESS_PERIOD_MILLIS = 3000;
   static const NO_NODES_DELAY = 1000;
+  static const HARD_TIMEOUT = 10000;
 
   Timer _addrTimer;
+  Timer _hardTimeout;
   NodeConnection _nodeConnection;
   var _sendNonce = 0;
   var _crawlIndex = 0;
@@ -68,6 +70,7 @@ class NodeProcessor {
   Future<void> crawlOpenNodes() async {
     final nextOpenNode = _getNextOpenNode();
     if (nextOpenNode != null) {
+      _hardTimeout = Timer(Duration(milliseconds: HARD_TIMEOUT), () => close());
       _nodeConnection = NodeConnection(
         close: close,
         node: nextOpenNode,
@@ -99,6 +102,7 @@ class NodeProcessor {
         _nodeConnection.sendMessage(PongMessage(_sendNonce));
       }
     } else if (message is VerackMessage) {
+      _hardTimeout.cancel();
       _addrTimer = Timer.periodic(Duration(milliseconds: SEND_ADDRESS_PERIOD_MILLIS), (t) => sendAddressMessage());
     } else if (message is VersionMessage) {
       _nodeConnection.sendMessage(VerackMessage());
