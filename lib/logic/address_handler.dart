@@ -23,7 +23,6 @@ class AddressHandler {
     if (processStart()) {
       return null;
     }
-    incomingMessage.addresses.forEach((peer) => print(HEX.encode(peer.address)));
     List<Node> nodes = List();
     for (PeerAddress peerAddress in incomingMessage.addresses) {
       nodes.add(Node(
