@@ -89,7 +89,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         text: 'Nodes (${_logic.nodesCount}) '
                             'Open(${_logic.openScanner.openCount.value}) '
                             'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
-                            'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value} - ${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
+                            'Open Checkers\n${_logic.openScanner.one.value}  ${_logic.openScanner.two.value}  ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value}  ${_logic.openScanner.five.value}  ${_logic.openScanner.six.value}',
                       );
                     }),
               ),
