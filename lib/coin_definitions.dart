@@ -506,7 +506,14 @@ class ZCoinDefinition implements Definition {
     "newjersey.zcoin.io",
     "sanfrancisco.zcoin.io",
     "tokyo.zcoin.io",
-    "singapore.zcoin.io"
+    "singapore.zcoin.io",
+    "172.93.199.83",
+    "209.97.133.14",
+    "45.77.215.231",
+    "54.202.208.55",
+    "85.214.40.125",
+    "104.207.146.219",
+    "159.203.122.183",
   ];
 
   @override

@@ -33,6 +33,7 @@ class NodeProcessor {
   static const SEND_ADDRESS_LIMIT = 11;
   static const SEND_ADDRESS_PERIOD_MILLIS = 3000;
   static const NO_NODES_DELAY = 1000;
+  static const GENERAL_NODES_DELAY = 2500;
   static const HARD_TIMEOUT = 10000;
 
   Timer _addrTimer;
@@ -92,6 +93,7 @@ class NodeProcessor {
       await Future.delayed(const Duration(milliseconds: NO_NODES_DELAY));
     }
     if (!_shutdownFlag) {
+      await Future.delayed(const Duration(milliseconds: GENERAL_NODES_DELAY));
       crawlOpenNodes();
     }
   }
@@ -100,6 +102,7 @@ class NodeProcessor {
     if (message is PingMessage) {
       if (message.hasNonce) {
         _nodeConnection.sendMessage(PongMessage(message.nonce > 0 ? message.nonce : _sendNonce));
+        _nodeConnection.sendMessage(PingMessage.empty());
       }
     } else if (message is VerackMessage) {
       _hardTimeout.cancel();

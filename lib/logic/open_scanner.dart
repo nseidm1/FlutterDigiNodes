@@ -43,12 +43,12 @@ class OpenScanner {
 
   int get _nodeCount => _nodes.length;
 
-  int _currentMaxIndex() {
+  int _currentMaxIndex(int index) {
     final currentMaxIndex = _indexes.fold<int>(0, (prev, el) => math.max(prev, el.value));
     if (currentMaxIndex < _nodeCount - 1) {
       return currentMaxIndex;
     } else {
-      return -1;
+      return index - 1;
     }
   }
 
@@ -76,7 +76,7 @@ class OpenScanner {
 
   Future<void> _startScanner(int index) async {
     if (_nodeCount != 0) {
-      _indexes[index].value = _currentMaxIndex() + 1;
+      _indexes[index].value = _currentMaxIndex(index) + 1;
       Node nextNode = _nodes[_indexes[index].value];
       if (!nextNode.open) {
         if (await NodeService.instance.checkNode(nextNode)) {
