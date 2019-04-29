@@ -5,6 +5,8 @@ import 'package:bitcoin/wire.dart';
 import 'package:diginodes/domain/node.dart';
 
 class CryptoUtils {
+  static Random random = Random();
+
   static Message getVersionMessage(Node node) {
     final services = BigInteger.ZERO;
     final time = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
@@ -14,7 +16,7 @@ class CryptoUtils {
       time: time,
       myAddress: PeerAddress.localhost(services: services, port: node.def.port),
       theirAddress: PeerAddress.localhost(services: services, port: node.def.port),
-      nonce: Random.secure().nextInt(999999),
+      nonce: random.nextInt(999999),
       subVer: "/" + node.def.coinName + ":" + ".1-Crawler" + "/",
       lastHeight: 0,
       relayBeforeFilter: false,

@@ -99,7 +99,7 @@ class NodeProcessor {
   void incomingMessageHandler(Message message) {
     if (message is PingMessage) {
       if (message.hasNonce) {
-        _nodeConnection.sendMessage(PongMessage(_sendNonce));
+        _nodeConnection.sendMessage(PongMessage(message.nonce > 0 ? message.nonce : _sendNonce));
       }
     } else if (message is VerackMessage) {
       _hardTimeout.cancel();
