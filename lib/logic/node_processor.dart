@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:bitcoin/wire.dart';
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
+import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:diginodes/logic/crypto_utils.dart';
 import 'package:flutter/foundation.dart';
@@ -37,18 +38,17 @@ class NodeProcessor {
   Timer _addrTimer;
   Timer _hardTimeout;
   NodeConnection _nodeConnection;
-  var _sendNonce = 0;
-  var _crawlIndex = 0;
+  AddNewNodes _addNewNodes;
+  Completer _completer;
+  int _sendNonce = 0;
+  int _crawlIndex = 0;
+  int _sendAddressMessageCount = 1;
+  int _addressBatchesReceived = 0;
   bool _shutdownFlag = false;
   int _recentsCount = 0;
 
-  AddNewNodes _addNewNodes;
-  var _sendAddressMessageCount = 1;
-  int get crawlIndex => _crawlIndex;
-  int _addressBatchesReceived = 0;
-
   int get recentsCount => _recentsCount;
-  Completer _completer;
+  int get crawlIndex => _crawlIndex;
 
   List<Node> _getOpenNodesList() {
     return List.from(_nodes.where((node) => node.open));

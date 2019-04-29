@@ -4,17 +4,17 @@ import 'dart:io';
 
 import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
+import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:diginodes/domain/message_list.dart';
 import 'package:diginodes/logic/node_processor.dart';
 import 'package:diginodes/ui/scroll_to_bottom_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diginodes/logic/open_scanner.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:archive/archive.dart';
+import 'package:archive/archive_io.dart';
 
 class HomeLogic {
   final _coinDefinition = ValueNotifier<Definition>(null);
@@ -98,31 +98,23 @@ class HomeLogic {
   Future<void> onShareButtonPressed() async {
     File file = await updateShareFile();
     List<int> bytes = file.readAsBytesSync();
-    await Share.file('nodes', 'nodes.zip', bytes, 'file/zip');
+    await Share.file('nodes', 'nodes.json.gz', bytes, 'application/gzip');
   }
 
   Future<File> updateShareFile() async {
     final file = await _localFile;
-
-    StringBuffer buffer = StringBuffer();
-    buffer.write('[');
-    buffer.write(_nodes.map((node) => jsonEncode(node)).join(','));
-    buffer.write(']');
-
-    List<int> stringBytes = utf8.encode(buffer.toString());
-    List<int> gzipBytes = new GZipEncoder().encode(stringBytes);
+    List<int> stringBytes = utf8.encode(json.encode(_nodes.toJson()).toString());
+    List<int> gzipBytes = GZipEncoder().encode(stringBytes);
     return file.writeAsBytes(gzipBytes);
   }
 
   Future<File> get _localFile async {
     final path = await _localPath;
-    return File('$path/nodes.zip');
+    return File('$path/nodes.json.gz');
   }
 
   Future<String> get _localPath async {
-    final directory = await getApplicationDocumentsDirectory();
-
-    return directory.path;
+    return (await getApplicationDocumentsDirectory()).path;
   }
 
   void onAddManualNodePressed() {}

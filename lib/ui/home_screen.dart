@@ -1,5 +1,5 @@
-import 'package:diginodes/backend/backend.dart';
 import 'package:diginodes/coin_definitions.dart';
+import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/logic/home_logic.dart';
 import 'package:flutter/material.dart';
 

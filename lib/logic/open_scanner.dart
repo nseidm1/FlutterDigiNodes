@@ -1,4 +1,5 @@
 import 'package:diginodes/backend/backend.dart';
+import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:math' as math;

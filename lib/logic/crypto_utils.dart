@@ -2,7 +2,7 @@ import 'dart:math';
 
 import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
-import 'package:diginodes/backend/backend.dart';
+import 'package:diginodes/domain/node.dart';
 
 class CryptoUtils {
   static Message getVersionMessage(Node node) {

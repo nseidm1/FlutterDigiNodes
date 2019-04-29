@@ -4,40 +4,10 @@ import 'dart:typed_data';
 
 import 'package:bitcoin/wire.dart';
 import 'package:diginodes/coin_definitions.dart';
+import 'package:diginodes/domain/node.dart';
 import 'package:meta/meta.dart';
 
 final _dnsCache = Map<String, List<InternetAddress>>();
-
-class Node {
-  Node(this.address, this.port, this.time, this.def, {bool open = false}) : _open = open;
-
-  final InternetAddress address;
-  final int port;
-  final Definition def;
-  final int time;
-  bool _open;
-
-  bool get open => _open;
-  set open(open) => _open = open;
-
-  @override
-  String toString() {
-    return 'Node{address: $address, port: $port, open: $open}';
-  }
-
-  @override
-  bool operator ==(Object other) => other is Node && address == other.address;
-
-  @override
-  int get hashCode => address.hashCode;
-
-  Map<String, dynamic> toJson() => {
-        'address': address.address,
-        'port': port,
-        'time': time,
-        'open': open,
-      };
-}
 
 class NodeService {
   static final instance = NodeService();

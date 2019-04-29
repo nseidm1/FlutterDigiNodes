@@ -1,7 +1,8 @@
 import 'package:collection/collection.dart';
-import 'package:diginodes/backend/backend.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+
+import 'node.dart';
 
 class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   NodeSet() : super({});
@@ -35,4 +36,6 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
     super.removeAll(elements);
     notifyListeners();
   }
+
+  List<Map<String, dynamic>> toJson() => map((el) => el.toJson()).toList(growable: false);
 }

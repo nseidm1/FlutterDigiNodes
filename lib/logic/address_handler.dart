@@ -1,7 +1,6 @@
 import 'package:bitcoin/wire.dart';
-import 'package:diginodes/backend/backend.dart';
+import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/domain/node_list.dart';
-import 'package:hex/hex.dart';
 import 'package:meta/meta.dart';
 
 import '../coin_definitions.dart';
@@ -26,7 +25,11 @@ class AddressHandler {
     List<Node> nodes = List();
     for (PeerAddress peerAddress in incomingMessage.addresses) {
       nodes.add(Node(
-          InternetUtils.getInternetAddress(peerAddress.address), peerAddress.port, peerAddress.time, coinDefinition));
+        InternetUtils.getInternetAddress(peerAddress.address),
+        peerAddress.port,
+        peerAddress.time,
+        coinDefinition,
+      ));
     }
     nodes.removeWhere((node) => existingNodeSet.contains(node));
     processComplete(nodes);
