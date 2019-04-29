@@ -160,6 +160,7 @@ class NodeConnection {
   }
 
   void _doneHandler() {
+    print('socket done');
     _homeLogicClose();
   }
 }

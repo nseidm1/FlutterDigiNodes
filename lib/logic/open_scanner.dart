@@ -29,6 +29,7 @@ class OpenScanner {
   ValueListenable<int> get five => _indexes[4];
   ValueListenable<int> get six => _indexes[5];
 
+  static const SUPER_DELAY = 5000;
   static const LONGEST_DELAY = 2500;
   static const LONG_DELAY = 1500;
   static const MEDIUM_DELAY = 1000;
@@ -88,7 +89,9 @@ class OpenScanner {
     }
     if (!_shutdown) {
       int milliseconds;
-      if (_nodeCount < 100) {
+      if (_nodeCount < 25) {
+        milliseconds = SUPER_DELAY;
+      } else if (_nodeCount < 100) {
         milliseconds = LONGEST_DELAY;
       } else if (_nodeCount < 1000) {
         milliseconds = LONG_DELAY;
