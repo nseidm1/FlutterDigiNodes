@@ -117,6 +117,14 @@ class NodeConnection {
       if (e is ArgumentError) {
         _pruneUnsupportedMessage();
         _attemptToFindMessage();
+      } else if (e is SerializationException) {
+        if (e.toString().contains("Too few bytes to be a Message")) {
+          // Do nothing, a full message has yet to be retrieved
+        } else if ('$e'.contains("Incorrect payload length in message header") ||
+            '$e'.contains("Incorrect checksum provided in serialized message")) {
+          _pruneUnsupportedMessage();
+          _attemptToFindMessage();
+        }
       }
     }
   }
@@ -133,11 +141,9 @@ class NodeConnection {
   void _pruneUnsupportedMessage() {
     final bytes = _builder.toBytes();
     int offset = _findSecondMagicPacketOffset(_builder.toBytes());
-    if (offset != -1) {
-      _builder.clear();
+    _builder.clear();
+    if (offset > 0) {
       _builder.add(bytes.sublist(offset));
-    } else {
-      _builder.clear();
     }
   }
 

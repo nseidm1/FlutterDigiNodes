@@ -99,7 +99,6 @@ class NodeProcessor {
     if (message is PingMessage) {
       if (message.hasNonce) {
         _nodeConnection.sendMessage(PongMessage(message.nonce > 0 ? message.nonce : _sendNonce));
-        _nodeConnection.sendMessage(PingMessage.empty());
       }
     } else if (message is VerackMessage) {
       _hardTimeout.cancel();
@@ -113,6 +112,8 @@ class NodeProcessor {
           coinDefinition: _coinDefinition.value,
           processStart: () => processAddressBatchCounter(),
           processComplete: (nodes) => newAddresses(nodes));
+    } else if (message is RejectMessage) {
+      print('Reject: ${message.message}, ${message.reason}');
     }
   }
 
