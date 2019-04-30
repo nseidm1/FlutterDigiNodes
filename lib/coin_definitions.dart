@@ -18,7 +18,6 @@ final coinDefinitions = const <Definition>[
   SyscoinDefinition(),
   VertCoinDefinition(),
   ZCashCoinDefition(),
-  ZCoinDefinition(),
 ];
 
 abstract class Definition {
