@@ -100,7 +100,6 @@ class NodeConnection {
   ///instead _homeLogicClose() is called in HomeLogic, which calls here.
   Future<void> close() async {
     _connected = false;
-    await _socket.flush();
     _socket?.destroy();
   }
 

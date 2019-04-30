@@ -22,7 +22,7 @@ class AddressHandler {
     if (processStart()) {
       return null;
     }
-    final nodes = List();
+    List<Node> nodes = List();
     for (PeerAddress peerAddress in incomingMessage.addresses) {
       nodes.add(
         Node(

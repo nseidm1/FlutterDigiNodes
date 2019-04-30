@@ -25,7 +25,7 @@ class NodeProcessor {
         _coinDefinition = coinDefinition,
         _addNewNodes = addNewNodes;
 
-  final _nodes;
+  final NodeSet _nodes;
   final _messageAdded;
   final _addNewNodes;
   final _coinDefinition;
