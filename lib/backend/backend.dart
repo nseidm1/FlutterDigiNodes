@@ -12,9 +12,8 @@ final _dnsCache = Map<String, List<InternetAddress>>();
 class NodeService {
   static final instance = NodeService();
 
-  static const PING_TIMEOUT = 1000;
-
-  final pingTimeout = Duration(milliseconds: PING_TIMEOUT);
+  static const _PING_TIMEOUT = 2500;
+  static final _pingTimeout = Duration(milliseconds: _PING_TIMEOUT);
 
   Future<void> init() async {}
 
@@ -43,7 +42,7 @@ class NodeService {
 
   Future<bool> checkNode(Node node) async {
     try {
-      final socket = await Socket.connect(node.address, node.port, timeout: Duration(milliseconds: 1500));
+      final socket = await Socket.connect(node.address, node.port, timeout: _pingTimeout);
       await socket.close();
       return Future<bool>.value(true);
     } catch (e) {
@@ -61,8 +60,11 @@ class NodeConnection {
   })  : _homeLogicClose = close,
         _node = node;
 
-  final Node _node;
-  final Close _homeLogicClose;
+  static const _SOCKET_CONNECT_TIMEOUT = 2500;
+  static final _socketConnectTimeout = Duration(milliseconds: _SOCKET_CONNECT_TIMEOUT);
+
+  final _node;
+  final _homeLogicClose;
   final _builder = BytesBuilder();
   final _incomingMessages = StreamController<Message>.broadcast();
   Socket _socket;
@@ -77,7 +79,7 @@ class NodeConnection {
     _socket = await Socket.connect(
       _node.address,
       _node.port,
-      timeout: const Duration(milliseconds: 2500),
+      timeout: _socketConnectTimeout,
     );
     _socket.setOption(SocketOption.tcpNoDelay, true);
     _socket.listen(_dataHandler, onError: _errorHandler, onDone: _doneHandler);
@@ -103,21 +105,23 @@ class NodeConnection {
 
   Future<void> _dataHandler(List<int> data) async {
     _builder.add(data);
-    attemptToFindMessage();
+    _attemptToFindMessage();
   }
 
-  void attemptToFindMessage() {
+  void _attemptToFindMessage() {
     try {
-      attemptToDeserializeMessage();
+      //This recursively calls this function until a SerializationException is thrown by Message.decode
+      _attemptToDeserializeMessage();
+      _attemptToFindMessage();
     } catch (e) {
       if (e is ArgumentError) {
-        pruneUnsupportedMessage();
-        attemptToFindMessage();
+        _pruneUnsupportedMessage();
+        _attemptToFindMessage();
       }
     }
   }
 
-  void attemptToDeserializeMessage() {
+  void _attemptToDeserializeMessage() {
     final allBytes = _builder.toBytes();
     final message = Message.decode(allBytes, _node.def.protocolVersion);
     print('_dataHandler decoded: $message');
@@ -126,9 +130,9 @@ class NodeConnection {
     _builder.add(allBytes.sublist(message.byteSize));
   }
 
-  void pruneUnsupportedMessage() {
+  void _pruneUnsupportedMessage() {
     final bytes = _builder.toBytes();
-    int offset = findSecondMagicPacketOffset(_builder.toBytes());
+    int offset = _findSecondMagicPacketOffset(_builder.toBytes());
     if (offset != -1) {
       _builder.clear();
       _builder.add(bytes.sublist(offset));
@@ -137,7 +141,7 @@ class NodeConnection {
     }
   }
 
-  int findSecondMagicPacketOffset(List<int> bytes) {
+  int _findSecondMagicPacketOffset(List<int> bytes) {
     final packetMagic = _node.def.packetMagic;
     final allBytes = Uint8List.fromList(bytes).buffer.asByteData();
     var magicOccurrence = 0;
