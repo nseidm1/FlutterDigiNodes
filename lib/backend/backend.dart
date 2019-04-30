@@ -132,13 +132,11 @@ class NodeConnection {
 
   void _attemptToDeserializeMessage() {
     final allBytes = _builder.toBytes();
-    print('Bytes before: $allBytes');
     final message = Message.decode(allBytes, _node.def.protocolVersion);
     print('_dataHandler decoded: $message');
     _incomingMessages.add(message);
     _builder.clear();
     _builder.add(allBytes.sublist(message.byteSize));
-    print('Bytes after: ${_builder.toBytes()}');
   }
 
   void _pruneUnsupportedMessage() {
