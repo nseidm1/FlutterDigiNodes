@@ -1,5 +1,4 @@
 import 'package:diginodes/backend/backend.dart';
-import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:math' as math;
@@ -11,8 +10,13 @@ class OpenScanner {
     @required NodeSet nodes,
   }) : _nodes = nodes;
 
-  final NodeSet _nodes;
+  static const SUPER_DELAY = 5000;
+  static const LONGEST_DELAY = 2500;
+  static const LONG_DELAY = 1500;
+  static const MEDIUM_DELAY = 1000;
+  static const SHORT_DELAY = 750;
 
+  final NodeSet _nodes;
   final _indexes = [
     ValueNotifier<int>(0),
     ValueNotifier<int>(0),
@@ -21,6 +25,7 @@ class OpenScanner {
     ValueNotifier<int>(0),
     ValueNotifier<int>(0)
   ];
+  final _openCount = new ValueNotifier<int>(0);
 
   ValueListenable<int> get one => _indexes[0];
   ValueListenable<int> get two => _indexes[1];
@@ -29,16 +34,9 @@ class OpenScanner {
   ValueListenable<int> get five => _indexes[4];
   ValueListenable<int> get six => _indexes[5];
 
-  static const SUPER_DELAY = 5000;
-  static const LONGEST_DELAY = 2500;
-  static const LONG_DELAY = 1500;
-  static const MEDIUM_DELAY = 1000;
-  static const SHORT_DELAY = 750;
-
   bool _shutdown = false;
   bool _running = false;
 
-  ValueNotifier<int> _openCount = new ValueNotifier<int>(0);
   ValueListenable<int> get openCount => _openCount;
 
   int get _nodeCount => _nodes.length;
@@ -77,7 +75,7 @@ class OpenScanner {
   Future<void> _startScanner(int index) async {
     if (_nodeCount != 0) {
       _indexes[index].value = _currentMaxIndex(index) + 1;
-      Node nextNode = _nodes[_indexes[index].value];
+      final nextNode = _nodes[_indexes[index].value];
       if (!nextNode.open) {
         if (await NodeService.instance.checkNode(nextNode)) {
           if (!nextNode.open) {

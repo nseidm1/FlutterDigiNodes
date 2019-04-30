@@ -22,14 +22,16 @@ class AddressHandler {
     if (processStart()) {
       return null;
     }
-    List<Node> nodes = List();
+    final nodes = List();
     for (PeerAddress peerAddress in incomingMessage.addresses) {
-      nodes.add(Node(
-        InternetUtils.getInternetAddress(peerAddress.address),
-        peerAddress.port,
-        peerAddress.time,
-        coinDefinition,
-      ));
+      nodes.add(
+        Node(
+          InternetUtils.getInternetAddress(peerAddress.address),
+          peerAddress.port,
+          peerAddress.time,
+          coinDefinition,
+        ),
+      );
     }
     nodes.removeWhere((node) => existingNodeSet.contains(node));
     processComplete(nodes);

@@ -10,7 +10,7 @@ class CryptoUtils {
   static Message getVersionMessage(Node node) {
     final services = BigInteger.ZERO;
     final time = DateTime.now().toUtc().millisecondsSinceEpoch ~/ 1000;
-    VersionMessage ver = new VersionMessage(
+    return VersionMessage(
       clientVersion: node.def.protocolVersion,
       services: services,
       time: time,
@@ -22,6 +22,5 @@ class CryptoUtils {
       relayBeforeFilter: false,
       coinName: node.def.coinName,
     );
-    return ver;
   }
 }

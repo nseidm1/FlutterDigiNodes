@@ -98,8 +98,9 @@ class NodeConnection {
 
   ///This is not called directly from this class,
   ///instead _homeLogicClose() is called in HomeLogic, which calls here.
-  close() {
+  Future<void> close() async {
     _connected = false;
+    await _socket.flush();
     _socket?.destroy();
   }
 

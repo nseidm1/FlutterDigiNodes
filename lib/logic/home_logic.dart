@@ -63,9 +63,9 @@ class HomeLogic {
 
   Future<void> _onCoinDefinitionChanged() async {
     _loadingDNS.value = true;
-    _reset();
+    _clear();
     _messageAdded("Resolving DNS");
-    List<Node> nodes = await NodeService.instance.startDiscovery(_coinDefinition.value);
+    final nodes = await NodeService.instance.startDiscovery(_coinDefinition.value);
     await Future.delayed(Duration(milliseconds: 1000));
     _addNewNodes(nodes);
     _openScanner.start();
@@ -73,7 +73,7 @@ class HomeLogic {
     _loadingDNS.value = false;
   }
 
-  void _reset() {
+  void _clear() {
     _nodeProcessor.clear();
     _nodes.clear();
     _openScanner.clear();
@@ -96,15 +96,15 @@ class HomeLogic {
   }
 
   Future<void> onShareButtonPressed() async {
-    File file = await updateShareFile();
-    List<int> bytes = file.readAsBytesSync();
+    final file = await updateShareFile();
+    final bytes = file.readAsBytesSync();
     await Share.file('nodes', 'nodes.json.gz', bytes, 'application/gzip');
   }
 
   Future<File> updateShareFile() async {
     final file = await _localFile;
-    List<int> stringBytes = utf8.encode(json.encode(_nodes.toJson()).toString());
-    List<int> gzipBytes = GZipEncoder().encode(stringBytes);
+    final stringBytes = utf8.encode(json.encode(_nodes.toJson()).toString());
+    final gzipBytes = GZipEncoder().encode(stringBytes);
     return file.writeAsBytes(gzipBytes);
   }
 

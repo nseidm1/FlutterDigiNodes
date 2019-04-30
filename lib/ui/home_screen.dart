@@ -167,7 +167,7 @@ class _HomeListHeader extends StatelessWidget {
     @required this.text,
   }) : super(key: key);
 
-  final String text;
+  final text;
 
   @override
   Widget build(BuildContext context) {
