@@ -31,8 +31,8 @@ class NodeProcessor {
   final _coinDefinition;
 
   // 10 sendAddr starting from 1
-  static const SEND_ADDRESS_LIMIT = 11;
-  static const SEND_ADDRESS_PERIOD_MILLIS = 3000;
+  static const SEND_ADDRESS_LIMIT = 19;
+  static const SEND_ADDRESS_PERIOD_MILLIS = 6000;
   static const NO_NODES_DELAY = 1000;
   static const GENERAL_NODES_DELAY = 2500;
   static const HARD_TIMEOUT = 10000;
@@ -45,7 +45,7 @@ class NodeProcessor {
   bool _shutdownFlag = false;
   int _sendNonce = 0;
   int _crawlIndex = 0;
-  int _sendAddressMessageCount = 1;
+  int _sendAddressMessageCount = 0;
   int _addressBatchesReceived = 0;
   int _recentsCount = 0;
 

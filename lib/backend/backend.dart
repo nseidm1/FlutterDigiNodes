@@ -88,8 +88,7 @@ class NodeConnection {
 
   Future<void> sendMessage(Message message) async {
     try {
-      var bytes = Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion);
-      _socket.add(bytes);
+      _socket.add(Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion));
       print('Message sent $message');
     } catch (e) {
       _homeLogicClose();
@@ -98,12 +97,12 @@ class NodeConnection {
 
   ///This is not called directly from this class,
   ///instead _homeLogicClose() is called in HomeLogic, which calls here.
-  Future<void> close() async {
+  void close() {
     _connected = false;
     _socket?.destroy();
   }
 
-  Future<void> _dataHandler(List<int> data) async {
+  void _dataHandler(List<int> data) {
     _builder.add(data);
     _pruneJunk();
     _attemptToFindMessage();
