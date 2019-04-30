@@ -105,6 +105,7 @@ class NodeConnection {
 
   Future<void> _dataHandler(List<int> data) async {
     _builder.add(data);
+    _pruneJunk();
     _attemptToFindMessage();
   }
 
@@ -117,37 +118,56 @@ class NodeConnection {
       if (e is ArgumentError) {
         _pruneUnsupportedMessage();
         _attemptToFindMessage();
+        print('Pruning unsupported message: $e');
       } else if (e is SerializationException) {
         if (e.toString().contains("Too few bytes to be a Message")) {
           // Do nothing, a full message has yet to be retrieved
-        } else if ('$e'.contains("Incorrect payload length in message header") ||
-            '$e'.contains("Incorrect checksum provided in serialized message")) {
-          _pruneUnsupportedMessage();
-          _attemptToFindMessage();
+          print('Waiting for the rest of the message');
         }
+      } else {
+        print('$e');
       }
     }
   }
 
   void _attemptToDeserializeMessage() {
     final allBytes = _builder.toBytes();
+    print('Bytes before: $allBytes');
     final message = Message.decode(allBytes, _node.def.protocolVersion);
     print('_dataHandler decoded: $message');
     _incomingMessages.add(message);
     _builder.clear();
     _builder.add(allBytes.sublist(message.byteSize));
+    print('Bytes after: ${_builder.toBytes()}');
   }
 
   void _pruneUnsupportedMessage() {
     final bytes = _builder.toBytes();
-    int offset = _findSecondMagicPacketOffset(_builder.toBytes());
+    int offset = _findSecondMagicOffset(_builder.toBytes());
     _builder.clear();
     if (offset > 0) {
       _builder.add(bytes.sublist(offset));
     }
   }
 
-  int _findSecondMagicPacketOffset(List<int> bytes) {
+  bool _pruneJunk() {
+    final packetMagic = _node.def.packetMagic;
+    final allBytes = Uint8List.fromList(_builder.toBytes()).buffer.asByteData();
+    if (allBytes.lengthInBytes >= 4 && allBytes.getUint32(0, Endian.big) != packetMagic) {
+      for (int i = 0; i < allBytes.lengthInBytes - 4; i++) {
+        if (allBytes.getUint32(i, Endian.big) == packetMagic) {
+          final holder = _builder.toBytes();
+          _builder.clear();
+          _builder.add(holder.sublist(i));
+          print('Junk pruned');
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  int _findSecondMagicOffset(List<int> bytes) {
     final packetMagic = _node.def.packetMagic;
     final allBytes = Uint8List.fromList(bytes).buffer.asByteData();
     var magicOccurrence = 0;

@@ -135,7 +135,7 @@ class NodeProcessor {
       }
     }
     if (nodes.length > 0) {
-      _messageAdded("Found ${nodes.length} new nodes");
+      _messageAdded("Found ${nodes.length} new ${nodes.length == 1 ? 'node' : 'nodes'}");
       _addNewNodes(nodes);
     } else {
       _messageAdded("No new nodes found");

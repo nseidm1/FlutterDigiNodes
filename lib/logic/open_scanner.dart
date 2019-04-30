@@ -46,7 +46,7 @@ class OpenScanner {
     if (currentMaxIndex < _nodeCount - 1) {
       return currentMaxIndex;
     } else {
-      return index - 1;
+      return (index).clamp(0, _nodeCount - 1) - 1;
     }
   }
 
