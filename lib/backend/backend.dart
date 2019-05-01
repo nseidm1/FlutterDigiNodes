@@ -115,14 +115,15 @@ class NodeConnection {
       _attemptToFindMessage();
     } catch (e) {
       if (e is ArgumentError) {
+        print('Pruning unsupported message: $e');
         _pruneUnsupportedMessage();
         _attemptToFindMessage();
-        print('Pruning unsupported message: $e');
       } else if (e is SerializationException) {
         if (e.toString().contains("Too few bytes to be a Message")) {
           // Do nothing, a full message has yet to be retrieved
-          print('Waiting for the rest of the message');
+          // print('Waiting for the rest of the message');
         }
+        if (e.toString().contains("Incorrect checksum provided in serialized message")) {}
       } else {
         print('$e');
       }
@@ -132,19 +133,31 @@ class NodeConnection {
   void _attemptToDeserializeMessage() {
     final allBytes = _builder.toBytes();
     final message = Message.decode(allBytes, _node.def.protocolVersion);
-    print('_dataHandler decoded: $message');
-    _incomingMessages.add(message);
     _builder.clear();
     _builder.add(allBytes.sublist(message.byteSize));
+    _incomingMessages.add(message);
+    print('_dataHandler decoded: $message');
   }
 
   void _pruneUnsupportedMessage() {
-    final bytes = _builder.toBytes();
-    int offset = _findSecondMagicOffset(_builder.toBytes());
-    _builder.clear();
-    if (offset > 0) {
-      _builder.add(bytes.sublist(offset));
+    List<int> packetMagics = _findPacketMagic(_builder.toBytes());
+    if (packetMagics.length > 1) {
+      _builder.add(_builder.takeBytes().sublist(packetMagics[1]));
+    } else {
+      _builder.clear();
     }
+  }
+
+  List<int> _findPacketMagic(List<int> bytes) {
+    final indexes = List<int>();
+    final packetMagic = _node.def.packetMagic;
+    final allBytes = Uint8List.fromList(bytes).buffer.asByteData();
+    for (int i = 0; i < allBytes.lengthInBytes - 4; i++) {
+      if (allBytes.getUint32(i, Endian.big) == packetMagic) {
+        indexes.add(i);
+      }
+    }
+    return indexes;
   }
 
   bool _pruneJunk() {
@@ -153,31 +166,13 @@ class NodeConnection {
     if (allBytes.lengthInBytes >= 4 && allBytes.getUint32(0, Endian.big) != packetMagic) {
       for (int i = 0; i < allBytes.lengthInBytes - 4; i++) {
         if (allBytes.getUint32(i, Endian.big) == packetMagic) {
-          final holder = _builder.toBytes();
-          _builder.clear();
-          _builder.add(holder.sublist(i));
+          _builder.add(_builder.takeBytes().sublist(i));
           print('Junk pruned');
           return true;
         }
       }
     }
     return false;
-  }
-
-  int _findSecondMagicOffset(List<int> bytes) {
-    final packetMagic = _node.def.packetMagic;
-    final allBytes = Uint8List.fromList(bytes).buffer.asByteData();
-    var magicOccurrence = 0;
-    for (int i = 0; i < allBytes.lengthInBytes - 4; i++) {
-      if (allBytes.getUint32(i, Endian.big) == packetMagic) {
-        if (magicOccurrence == 1) {
-          return i;
-        } else {
-          magicOccurrence++;
-        }
-      }
-    }
-    return -1;
   }
 
   void _errorHandler(error, StackTrace trace) {

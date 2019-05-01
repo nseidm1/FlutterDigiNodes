@@ -31,7 +31,7 @@ class NodeProcessor {
   final _coinDefinition;
 
   // 10 sendAddr starting from 1
-  static const SEND_ADDRESS_LIMIT = 19;
+  static const SEND_ADDRESS_LIMIT = 10;
   static const SEND_ADDRESS_PERIOD_MILLIS = 6000;
   static const NO_NODES_DELAY = 1000;
   static const GENERAL_NODES_DELAY = 2500;
