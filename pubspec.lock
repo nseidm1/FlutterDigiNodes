@@ -50,7 +50,7 @@ packages:
     description:
       path: "."
       ref: HEAD
-      resolved-ref: d778cb8f76f7e5a63c6de3a4c337259ea6aba510
+      resolved-ref: "6f7e61dead721335cdb9349ba226508d28907b1e"
       url: "https://github.com/nseidm1/dart-bitcoin.git"
     source: git
     version: "0.0.0"

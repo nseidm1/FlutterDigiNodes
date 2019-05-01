@@ -75,6 +75,7 @@ class OpenScanner {
   Future<void> _startScanner(int index) async {
     if (_nodeCount != 0) {
       _indexes[index].value = _currentMaxIndex(index) + 1;
+      await Future.delayed(Duration(milliseconds: 10 * (index + 1)));
       final nextNode = _nodes[_indexes[index].value];
       if (!nextNode.open) {
         if (await NodeService.instance.checkNode(nextNode)) {

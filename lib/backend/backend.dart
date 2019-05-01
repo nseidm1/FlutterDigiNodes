@@ -105,27 +105,26 @@ class NodeConnection {
   void _dataHandler(List<int> data) {
     _builder.add(data);
     _pruneJunk();
-    _attemptToFindMessage();
+    _attemptToProcessMessage();
   }
 
-  void _attemptToFindMessage() {
+  void _attemptToProcessMessage() {
     try {
       //This recursively calls this function until a SerializationException is thrown by Message.decode
       _attemptToDeserializeMessage();
-      _attemptToFindMessage();
+      _attemptToProcessMessage();
     } catch (e) {
       if (e is ArgumentError) {
         print('Pruning unsupported message: $e');
         _pruneUnsupportedMessage();
-        _attemptToFindMessage();
+        _attemptToProcessMessage();
       } else if (e is SerializationException) {
         if (e.toString().contains("Too few bytes to be a Message")) {
           // Do nothing, a full message has yet to be retrieved
           // print('Waiting for the rest of the message');
         }
-        if (e.toString().contains("Incorrect checksum provided in serialized message")) {}
       } else {
-        print('$e');
+        print('Attempt To Process Exception: $e');
       }
     }
   }
