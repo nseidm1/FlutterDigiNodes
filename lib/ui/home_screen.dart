@@ -119,7 +119,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                         text: 'Nodes (${_logic.nodesCount}) '
                             'Open(${_logic.openScanner.openCount.value}) '
                             'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
-                            'Open Checkers\n${_logic.openScanner.one.value}  ${_logic.openScanner.two.value}  ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value}  ${_logic.openScanner.five.value}  ${_logic.openScanner.six.value}',
+                            'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
                       );
                     }),
               ),
@@ -213,6 +213,7 @@ class _HomeListHeader extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: theme.textTheme.subhead.copyWith(
+          height: 1.3,
           fontWeight: FontWeight.bold,
           color: textColor,
         ),
