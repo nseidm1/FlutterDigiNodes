@@ -105,7 +105,7 @@ class HomeLogic with AnimationLocalStatusListenersMixin {
           _controller.removeStatusListener(listener);
           _messagesScrollController.scrollToBottom();
         };
-        _controller?.addStatusListener(listener);
+        _controller.addStatusListener(listener);
         _controller.reverse();
       }
     };
