@@ -9,27 +9,30 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
-  final _logic = HomeLogic();
-  Animation animation;
+  AnimationController _controller;
+  Animation _messagesHeaderAnimation;
+  HomeLogic _logic;
 
   @override
   void initState() {
     super.initState();
-    _logic.animationController = AnimationController(
+    _controller = AnimationController(
       duration: Duration(milliseconds: 1000),
       vsync: this,
     );
-    animation = Tween<Offset>(
+    _messagesHeaderAnimation = Tween<Offset>(
       begin: Offset(0, 0),
       end: Offset(0, -1),
     ).animate(CurvedAnimation(
-      parent: _logic.animationController,
+      parent: _controller,
       curve: Curves.easeInOutQuad,
     ));
+    _logic = HomeLogic(_controller);
   }
 
   @override
   void dispose() {
+    _controller.dispose();
     _logic.dispose();
     super.dispose();
   }
@@ -64,40 +67,51 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
           body: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
-              AnimatedBuilder(
-                  animation: _logic.messages,
-                  builder: (BuildContext context, Widget child) {
-                    return SlideTransition(
-                      position: animation,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(15),
-                          bottomRight: Radius.circular(15),
-                        ),
-                        child: _HomeListHeader(
-                          textColor: Colors.white,
-                          color: const Color(0xFF00574B),
-                          text: "Messages (${_logic.messages.length})",
-                        ),
-                      ),
-                    );
-                  }),
               Expanded(
-                child: AnimatedBuilder(
-                  animation: _logic.messages,
-                  builder: (BuildContext context, Widget child) {
-                    return ListView.builder(
-                      controller: _logic.messagesScrollController,
-                      itemCount: _logic.messages.length,
-                      itemBuilder: (BuildContext context, int index) {
-                        final message = _logic.messages[index];
-                        return ListTile(
-                          key: ValueKey<String>(message),
-                          title: Center(child: Text(message)),
+                child: Stack(
+                  children: <Widget>[
+                    AnimatedBuilder(
+                      animation: _logic.messages,
+                      builder: (BuildContext context, Widget child) {
+                        return ListView.builder(
+                          padding: EdgeInsets.only(top: 48),
+                          controller: _logic.messagesScrollController,
+                          itemCount: _logic.messages.length,
+                          itemBuilder: (BuildContext context, int index) {
+                            final message = _logic.messages[index];
+                            return ListTile(
+                              key: ValueKey<String>(message),
+                              title: Center(child: Text(message)),
+                            );
+                          },
                         );
                       },
-                    );
-                  },
+                    ),
+                    Positioned(
+                      left: 0.0,
+                      top: 0.0,
+                      right: 0.0,
+                      child: SlideTransition(
+                        position: _messagesHeaderAnimation,
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.only(
+                            bottomLeft: Radius.circular(15),
+                            bottomRight: Radius.circular(15),
+                          ),
+                          child: AnimatedBuilder(
+                            animation: _logic.messages,
+                            builder: (BuildContext context, Widget child) {
+                              return _HomeListHeader(
+                                textColor: Colors.white,
+                                color: const Color(0xFF00574B),
+                                text: "Messages (${_logic.messages.length})",
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    )
+                  ],
                 ),
               ),
               Container(

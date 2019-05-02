@@ -41,10 +41,7 @@ class HomeLogic with AnimationLocalStatusListenersMixin {
 
   AnimationController _controller;
 
-  AnimationController get animationController => _controller;
-  set animationController(controller) => _controller = controller;
-
-  HomeLogic() {
+  HomeLogic(this._controller) {
     _messagesScrollController = ScrollToBottomController(duration: 500);
     _nodesScrollController = ScrollToBottomController(duration: 4000);
     _openScanner = OpenScanner(
