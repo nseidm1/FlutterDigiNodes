@@ -71,10 +71,12 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       position: animation,
                       child: ClipRRect(
                         borderRadius: BorderRadius.only(
-                          bottomLeft: Radius.circular(30),
-                          bottomRight: Radius.circular(30),
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15),
                         ),
                         child: _HomeListHeader(
+                          textColor: Colors.white,
+                          color: const Color(0xFF00574B),
                           text: "Messages (${_logic.messages.length})",
                         ),
                       ),
@@ -111,14 +113,13 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                       _logic.openScanner.six
                     ]),
                     builder: (BuildContext context, Widget child) {
-                      return ClipRRect(
-                        borderRadius: new BorderRadius.circular(30.0),
-                        child: _HomeListHeader(
-                          text: 'Nodes (${_logic.nodesCount}) '
-                              'Open(${_logic.openScanner.openCount.value}) '
-                              'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
-                              'Open Checkers\n${_logic.openScanner.one.value}  ${_logic.openScanner.two.value}  ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value}  ${_logic.openScanner.five.value}  ${_logic.openScanner.six.value}',
-                        ),
+                      return _HomeListHeader(
+                        textColor: Colors.grey[900],
+                        color: const Color(0xFF008577),
+                        text: 'Nodes (${_logic.nodesCount}) '
+                            'Open(${_logic.openScanner.openCount.value}) '
+                            'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
+                            'Open Checkers\n${_logic.openScanner.one.value}  ${_logic.openScanner.two.value}  ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value}  ${_logic.openScanner.five.value}  ${_logic.openScanner.six.value}',
                       );
                     }),
               ),
@@ -194,22 +195,26 @@ class _HomeListHeader extends StatelessWidget {
   const _HomeListHeader({
     Key key,
     @required this.text,
+    @required this.color,
+    @required this.textColor,
   }) : super(key: key);
 
   final text;
+  final color;
+  final textColor;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-      color: const Color(0xFF00574B),
+      color: color,
       child: Text(
         text,
         textAlign: TextAlign.center,
         style: theme.textTheme.subhead.copyWith(
           fontWeight: FontWeight.bold,
-          color: Colors.white,
+          color: textColor,
         ),
       ),
     );
