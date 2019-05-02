@@ -16,7 +16,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:archive/archive_io.dart';
 
-class HomeLogic {
+class HomeLogic with AnimationLocalStatusListenersMixin {
   final _coinDefinition = ValueNotifier<Definition>(null);
   final _loadingDNS = ValueNotifier<bool>(false);
   final _nodes = NodeSet();
@@ -38,6 +38,11 @@ class HomeLogic {
   int get nodesCount => _nodes.length;
   OpenScanner get openScanner => _openScanner;
   NodeProcessor get nodeProcessor => _nodeProcessor;
+
+  AnimationController _controller;
+
+  AnimationController get animationController => _controller;
+  set animationController(controller) => _controller = controller;
 
   HomeLogic() {
     _messagesScrollController = ScrollToBottomController(duration: 500);
@@ -91,8 +96,21 @@ class HomeLogic {
   }
 
   void _messageAdded(String message) {
-    _messages.add(message);
-    _messagesScrollController.scrollToBottom();
+    AnimationStatusListener listener;
+    listener = (AnimationStatus status) {
+      if (status == AnimationStatus.completed) {
+        _controller.removeStatusListener(listener);
+        _messages.add(message);
+        listener = (AnimationStatus status) {
+          _controller.removeStatusListener(listener);
+          _messagesScrollController.scrollToBottom();
+        };
+        _controller?.addStatusListener(listener);
+        _controller.reverse();
+      }
+    };
+    _controller?.addStatusListener(listener);
+    _controller?.forward();
   }
 
   Future<void> onShareButtonPressed() async {
@@ -118,4 +136,10 @@ class HomeLogic {
   }
 
   void onAddManualNodePressed() {}
+
+  @override
+  void didRegisterListener() {}
+
+  @override
+  void didUnregisterListener() {}
 }

@@ -32,7 +32,7 @@ class NodeProcessor {
 
   // 10 sendAddr starting from 1
   static const SEND_ADDRESS_LIMIT = 15;
-  static const SEND_ADDRESS_PERIOD_MILLIS = 3000;
+  static const SEND_ADDRESS_PERIOD_MILLIS = 4500;
   static const NO_NODES_DELAY = 1000;
   static const GENERAL_NODES_DELAY = 2500;
   static const HARD_TIMEOUT = 10000;

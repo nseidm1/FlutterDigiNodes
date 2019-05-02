@@ -8,8 +8,25 @@ class HomeScreen extends StatefulWidget {
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
   final _logic = HomeLogic();
+  Animation animation;
+
+  @override
+  void initState() {
+    super.initState();
+    _logic.animationController = AnimationController(
+      duration: Duration(milliseconds: 1000),
+      vsync: this,
+    );
+    animation = Tween<Offset>(
+      begin: Offset(0, 0),
+      end: Offset(0, -1),
+    ).animate(CurvedAnimation(
+      parent: _logic.animationController,
+      curve: Curves.easeInOutQuad,
+    ));
+  }
 
   @override
   void dispose() {
@@ -50,8 +67,17 @@ class _HomeScreenState extends State<HomeScreen> {
               AnimatedBuilder(
                   animation: _logic.messages,
                   builder: (BuildContext context, Widget child) {
-                    return _HomeListHeader(
-                      text: "Messages (${_logic.messages.length})",
+                    return SlideTransition(
+                      position: animation,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(30),
+                          bottomRight: Radius.circular(30),
+                        ),
+                        child: _HomeListHeader(
+                          text: "Messages (${_logic.messages.length})",
+                        ),
+                      ),
                     );
                   }),
               Expanded(
@@ -85,11 +111,14 @@ class _HomeScreenState extends State<HomeScreen> {
                       _logic.openScanner.six
                     ]),
                     builder: (BuildContext context, Widget child) {
-                      return _HomeListHeader(
-                        text: 'Nodes (${_logic.nodesCount}) '
-                            'Open(${_logic.openScanner.openCount.value}) '
-                            'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
-                            'Open Checkers\n${_logic.openScanner.one.value}  ${_logic.openScanner.two.value}  ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value}  ${_logic.openScanner.five.value}  ${_logic.openScanner.six.value}',
+                      return ClipRRect(
+                        borderRadius: new BorderRadius.circular(30.0),
+                        child: _HomeListHeader(
+                          text: 'Nodes (${_logic.nodesCount}) '
+                              'Open(${_logic.openScanner.openCount.value}) '
+                              'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
+                              'Open Checkers\n${_logic.openScanner.one.value}  ${_logic.openScanner.two.value}  ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value}  ${_logic.openScanner.five.value}  ${_logic.openScanner.six.value}',
+                        ),
                       );
                     }),
               ),
