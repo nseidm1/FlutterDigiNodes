@@ -30,9 +30,8 @@ class NodeProcessor {
   final _addNewNodes;
   final _coinDefinition;
 
-  // 10 sendAddr starting from 1
   static const SEND_ADDRESS_LIMIT = 15;
-  static const SEND_ADDRESS_PERIOD_MILLIS = 4500;
+  static const SEND_ADDRESS_PERIOD_MILLIS = 6000;
   static const NO_NODES_DELAY = 1000;
   static const GENERAL_NODES_DELAY = 2500;
   static const HARD_TIMEOUT = 10000;
@@ -161,7 +160,6 @@ class NodeProcessor {
     if (_completer != null && !_completer.isCompleted) {
       _completer.complete(true);
     }
-
     _sendAddressMessageCount = 1;
   }
 

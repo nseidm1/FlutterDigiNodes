@@ -15,10 +15,6 @@ class NodeService {
   static const _PING_TIMEOUT = 2500;
   static final _pingTimeout = Duration(milliseconds: _PING_TIMEOUT);
 
-  Future<void> init() async {}
-
-  Future<void> close() async {}
-
   Future<List<Node>> startDiscovery(Definition definition) async {
     final results = await Future.wait(definition.dnsSeeds.map(
       (seed) async {
@@ -86,7 +82,7 @@ class NodeConnection {
     _connected = true;
   }
 
-  Future<void> sendMessage(Message message) async {
+  void sendMessage(Message message) {
     try {
       _socket.add(Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion));
       print('Message sent $message');

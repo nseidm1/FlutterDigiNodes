@@ -95,7 +95,7 @@ class HomeLogic with AnimationLocalStatusListenersMixin {
     _nodesScrollController.scrollToBottom();
   }
 
-  void _messageAdded(String message) {
+  Future<void> _messageAdded(String message) async {
     AnimationStatusListener listener;
     listener = (AnimationStatus status) {
       if (status == AnimationStatus.completed) {
@@ -103,7 +103,7 @@ class HomeLogic with AnimationLocalStatusListenersMixin {
         _messages.add(message);
         listener = (AnimationStatus status) {
           _controller.removeStatusListener(listener);
-          _messagesScrollController.scrollToBottom();
+          scrollToBottom();
         };
         _controller.addStatusListener(listener);
         _controller.reverse();
@@ -111,6 +111,11 @@ class HomeLogic with AnimationLocalStatusListenersMixin {
     };
     _controller?.addStatusListener(listener);
     _controller?.forward();
+  }
+
+  Future<void> scrollToBottom() async {
+    await Future.delayed(Duration(milliseconds: 750));
+    _messagesScrollController.scrollToBottom();
   }
 
   Future<void> onShareButtonPressed() async {
