@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:diginodes/ui/map.dart';
+
 import '../coin_definitions.dart';
 
 class Node {
@@ -9,9 +11,11 @@ class Node {
   final Definition def;
   final int time;
   bool _open;
+  MapItem _mapItem;
 
   bool get open => _open;
   set open(open) => _open = open;
+  set mapItem(mapItem) => _mapItem = mapItem;
 
   @override
   String toString() {

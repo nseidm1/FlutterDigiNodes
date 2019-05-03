@@ -8,6 +8,7 @@ import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/domain/node_list.dart';
 import 'package:diginodes/domain/message_list.dart';
 import 'package:diginodes/logic/node_processor.dart';
+import 'package:diginodes/ui/map.dart';
 import 'package:diginodes/ui/scroll_to_bottom_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diginodes/logic/open_scanner.dart';
@@ -16,7 +17,7 @@ import 'package:esys_flutter_share/esys_flutter_share.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:archive/archive_io.dart';
 
-class HomeLogic with AnimationLocalStatusListenersMixin {
+class HomeLogic {
   final _coinDefinition = ValueNotifier<Definition>(null);
   final _loadingDNS = ValueNotifier<bool>(false);
   final _nodes = NodeSet();
@@ -87,7 +88,7 @@ class HomeLogic with AnimationLocalStatusListenersMixin {
     _openScanner.shutdown();
   }
 
-  void _addNewNodes(List<Node> nodes) {
+  Future<void> _addNewNodes(List<Node> nodes) async {
     _nodes.addAll(nodes);
     _nodesScrollController.scrollToBottom();
   }
@@ -138,10 +139,4 @@ class HomeLogic with AnimationLocalStatusListenersMixin {
   }
 
   void onAddManualNodePressed() {}
-
-  @override
-  void didRegisterListener() {}
-
-  @override
-  void didUnregisterListener() {}
 }

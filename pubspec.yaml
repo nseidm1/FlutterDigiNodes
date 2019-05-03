@@ -15,6 +15,7 @@ dependencies:
   flutter_launcher_icons: ^0.7.0
   bitcoin:
     git: https://github.com/nseidm1/dart-bitcoin.git
+  logging: any
   flutter:
     sdk: flutter
 

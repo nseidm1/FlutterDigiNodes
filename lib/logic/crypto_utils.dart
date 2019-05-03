@@ -1,5 +1,3 @@
-import 'dart:math';
-
 import 'package:bignum/bignum.dart';
 import 'package:bitcoin/wire.dart';
 import 'package:diginodes/domain/node.dart';

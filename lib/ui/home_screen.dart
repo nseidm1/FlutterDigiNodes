@@ -3,12 +3,14 @@ import 'package:diginodes/domain/node.dart';
 import 'package:diginodes/logic/home_logic.dart';
 import 'package:flutter/material.dart';
 
+import 'map.dart';
+
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   AnimationController _controller;
   Animation _messagesHeaderAnimation;
   HomeLogic _logic;
@@ -102,6 +104,7 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                             animation: _logic.messages,
                             builder: (BuildContext context, Widget child) {
                               return _HomeListHeader(
+                                textSize: 18,
                                 textColor: Colors.white,
                                 color: const Color(0xFF00574B),
                                 text: "Messages (${_logic.messages.length})",
@@ -114,28 +117,67 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
                   ],
                 ),
               ),
-              Container(
-                child: AnimatedBuilder(
-                    animation: Listenable.merge([
-                      _logic.nodes,
-                      _logic.openScanner.openCount,
-                      _logic.openScanner.one,
-                      _logic.openScanner.two,
-                      _logic.openScanner.three,
-                      _logic.openScanner.four,
-                      _logic.openScanner.five,
-                      _logic.openScanner.six
-                    ]),
-                    builder: (BuildContext context, Widget child) {
-                      return _HomeListHeader(
-                        textColor: Colors.grey[900],
-                        color: const Color(0xFF008577),
-                        text: 'Nodes (${_logic.nodesCount}) '
-                            'Open(${_logic.openScanner.openCount.value}) '
-                            'Recent (${_logic.nodeProcessor.recentsCount})\nCrawling Node #${_logic.nodeProcessor.crawlIndex}\n'
-                            'Open Checkers\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value}\n${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
-                      );
-                    }),
+              Stack(
+                children: <Widget>[
+                  ClipRect(
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      heightFactor: 0.78,
+                      child: AspectRatio(
+                        aspectRatio: 1,
+                        child: MapWidget(items: [
+                          MapItem(27.716205, -81.946497, Colors.red),
+                          MapItem(51.513343, -0.103262, Colors.purple),
+                        ]),
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: double.maxFinite,
+                    child: AnimatedBuilder(
+                      animation: Listenable.merge([
+                        _logic.nodes,
+                        _logic.openScanner.openCount,
+                      ]),
+                      builder: (BuildContext context, Widget child) {
+                        return _HomeListHeader(
+                            textSize: 16,
+                            textColor: Colors.white,
+                            color: const Color(0xAF008577),
+                            text: 'Nodes (${_logic.nodesCount}) '
+                                'Open(${_logic.openScanner.openCount.value})\n'
+                                'Recent (${_logic.nodeProcessor.recentsCount}) Crawling (${_logic.nodeProcessor.crawlIndex})');
+                      },
+                    ),
+                  ),
+                  Positioned(
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    child: SizedBox(
+                      width: double.maxFinite,
+                      child: AnimatedBuilder(
+                        animation: Listenable.merge([
+                          _logic.openScanner.one,
+                          _logic.openScanner.two,
+                          _logic.openScanner.three,
+                          _logic.openScanner.four,
+                          _logic.openScanner.five,
+                          _logic.openScanner.six,
+                        ]),
+                        builder: (BuildContext context, Widget child) {
+                          return _HomeListHeader(
+                            textSize: 16,
+                            textColor: Colors.white,
+                            color: const Color(0xAF008577),
+                            text:
+                                'Open Scanners\n${_logic.openScanner.one.value} - ${_logic.openScanner.two.value} - ${_logic.openScanner.three.value} - ${_logic.openScanner.four.value} - ${_logic.openScanner.five.value} - ${_logic.openScanner.six.value}',
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                ],
               ),
               Expanded(
                 child: AnimatedBuilder(
@@ -211,11 +253,13 @@ class _HomeListHeader extends StatelessWidget {
     @required this.text,
     @required this.color,
     @required this.textColor,
+    @required this.textSize,
   }) : super(key: key);
 
   final text;
   final color;
   final textColor;
+  final double textSize;
 
   @override
   Widget build(BuildContext context) {
@@ -227,9 +271,8 @@ class _HomeListHeader extends StatelessWidget {
         text,
         textAlign: TextAlign.center,
         style: theme.textTheme.subhead.copyWith(
-          height: 1.3,
-          fontWeight: FontWeight.bold,
           color: textColor,
+          fontSize: textSize,
         ),
       ),
     );

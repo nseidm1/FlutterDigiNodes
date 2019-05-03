@@ -5,9 +5,12 @@ import 'dart:typed_data';
 import 'package:bitcoin/wire.dart';
 import 'package:diginodes/coin_definitions.dart';
 import 'package:diginodes/domain/node.dart';
+import 'package:logging/logging.dart';
 import 'package:meta/meta.dart';
 
 final _dnsCache = Map<String, List<InternetAddress>>();
+
+final _logger = Logger("backend");
 
 class NodeService {
   static final instance = NodeService();
@@ -23,7 +26,7 @@ class NodeService {
           try {
             addresses = await InternetAddress.lookup(seed);
           } catch (e) {
-            print('DNS Failed: $e');
+            _logger.log(Level.SEVERE, 'DNS Failed: $e');
             addresses = [];
           }
           _dnsCache.putIfAbsent(seed, () => addresses);
@@ -32,7 +35,7 @@ class NodeService {
       },
     ));
     final addresses = results.where((el) => el != null).reduce((a, b) => a + b).toList();
-    print('onDnsDiscovery: ${definition.coinName}: addresses $addresses');
+    _logger.log(Level.INFO, 'onDnsDiscovery: ${definition.coinName}: addresses $addresses');
     return addresses.map((address) => Node(address, definition.port, 0, definition, open: false)).toList();
   }
 
@@ -85,7 +88,7 @@ class NodeConnection {
   void sendMessage(Message message) {
     try {
       _socket.add(Message.encode(message, _node.def.packetMagic, _node.def.protocolVersion));
-      print('Message sent $message');
+      _logger.log(Level.WARNING, 'Message sent $message');
     } catch (e) {
       _homeLogicClose();
     }

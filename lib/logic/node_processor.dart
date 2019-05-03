@@ -78,7 +78,7 @@ class NodeProcessor {
             .listen((Message message) => incomingMessageHandler(message), onError: (e) => _completer.completeError(e));
         await _nodeConnection.connect(_coinDefinition.value);
         _messageAdded("New node connected: $_crawlIndex");
-        await _nodeConnection.sendMessage(CryptoUtils.getVersionMessage(nextOpenNode));
+        _nodeConnection.sendMessage(CryptoUtils.getVersionMessage(nextOpenNode));
         await _completer.future;
       } catch (e) {
         print('$e');
