@@ -16,6 +16,10 @@ class MapItem {
     final y = (0.5 - math.log((1.0 + sinLatitude) / (1.0 - sinLatitude)) / (4 * math.pi));
     return math.Point<double>(x, y);
   }
+
+  factory MapItem.fromJson(Map<String, dynamic> json) {
+    return MapItem(json['latitude'], json['longitude'], Colors.blue);
+  }
 }
 
 class MapWidget extends StatelessWidget {

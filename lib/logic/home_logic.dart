@@ -12,10 +12,13 @@ import 'package:diginodes/ui/map.dart';
 import 'package:diginodes/ui/scroll_to_bottom_controller.dart';
 import 'package:flutter/foundation.dart';
 import 'package:diginodes/logic/open_scanner.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:esys_flutter_share/esys_flutter_share.dart';
+import 'package:http/http.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:archive/archive_io.dart';
+import 'package:http/http.dart' as http;
 
 class HomeLogic {
   final _coinDefinition = ValueNotifier<Definition>(null);
@@ -89,6 +92,22 @@ class HomeLogic {
   }
 
   Future<void> _addNewNodes(List<Node> nodes) async {
+    final addresses = nodes.map((node) => node.address.address).join(",");
+    Response response = await http.get('http://noahseidman.com/geoip.json?ips=$addresses');
+    print('${response.statusCode}, ${response.reasonPhrase}');
+    if (response != null) {
+      Map responseJson = jsonDecode(response.body);
+      print('${responseJson.length}');
+      for (Node node in nodes) {
+        final location = responseJson[node.address.address];
+        print('$location');
+        if (location != null) {
+          double longitude = location["longitude"].toDouble();
+          double latitude = location["latitude"].toDouble();
+          node.mapItem = MapItem(longitude, latitude, Colors.blue);
+        }
+      }
+    }
     _nodes.addAll(nodes);
     _nodesScrollController.scrollToBottom();
   }

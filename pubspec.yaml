@@ -16,6 +16,7 @@ dependencies:
   bitcoin:
     git: https://github.com/nseidm1/dart-bitcoin.git
   logging: any
+  http: any
   flutter:
     sdk: flutter
 

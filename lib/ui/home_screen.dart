@@ -125,10 +125,12 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
                       heightFactor: 0.78,
                       child: AspectRatio(
                         aspectRatio: 1,
-                        child: MapWidget(items: [
-                          MapItem(27.716205, -81.946497, Colors.red),
-                          MapItem(51.513343, -0.103262, Colors.purple),
-                        ]),
+                        child: AnimatedBuilder(
+                          animation: _logic.nodes,
+                          builder: (BuildContext context, Widget child) {
+                            return MapWidget(items: _logic.nodes.getMapItems());
+                          },
+                        ),
                       ),
                     ),
                   ),

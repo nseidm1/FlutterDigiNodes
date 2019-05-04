@@ -1,4 +1,5 @@
 import 'package:collection/collection.dart';
+import 'package:diginodes/ui/map.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
@@ -35,6 +36,10 @@ class NodeSet extends DelegatingSet<Node> with ChangeNotifier {
   void removeAll(Iterable<Object> elements) {
     super.removeAll(elements);
     notifyListeners();
+  }
+
+  List<MapItem> getMapItems() {
+    return List.from(this.where((node) => node.mapItem != null).map<MapItem>((node) => node.mapItem));
   }
 
   List<Map<String, dynamic>> toJson() => map((el) => el.toJson()).toList(growable: false);

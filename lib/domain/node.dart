@@ -16,6 +16,7 @@ class Node {
   bool get open => _open;
   set open(open) => _open = open;
   set mapItem(mapItem) => _mapItem = mapItem;
+  MapItem get mapItem => _mapItem;
 
   @override
   String toString() {
