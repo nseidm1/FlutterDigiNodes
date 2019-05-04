@@ -100,11 +100,11 @@ class HomeLogic {
       print('${responseJson.length}');
       for (Node node in nodes) {
         final location = responseJson[node.address.address];
-        print('$location');
         if (location != null) {
           double longitude = location["longitude"].toDouble();
           double latitude = location["latitude"].toDouble();
-          node.mapItem = MapItem(longitude, latitude, Colors.blue);
+          print('$longitude, $latitude');
+          node.mapItem = MapItem(latitude, longitude, Colors.blue);
         }
       }
     }
