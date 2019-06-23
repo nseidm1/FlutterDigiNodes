@@ -15,7 +15,6 @@ final coinDefinitions = const <Definition>[
   PivxCoinDefinition(),
   RapidsCoinDefition(),
   StratisDefinition(),
-  SyscoinDefinition(),
   VertCoinDefinition(),
   ZCashCoinDefition(),
 ];
@@ -59,7 +58,7 @@ class DigiByteCoinDefinition implements Definition {
   final String coinName = "DigiByte";
 
   @override
-  final int protocolVersion = 70016;
+  final int protocolVersion = 70017;
 
   @override
   final int port = 12024;
